@@ -14,6 +14,9 @@ namespace Microsoft.Build.Experimental.BuildCheck.Analyzers;
 
 internal sealed class SharedOutputPathAnalyzer : BuildAnalyzer
 {
+    private readonly Dictionary<string, string> _projectsPerOutputPath = new(StringComparer.CurrentCultureIgnoreCase);
+    private readonly HashSet<string> _projects = new(StringComparer.CurrentCultureIgnoreCase);
+
     public static BuildAnalyzerRule SupportedRule = new BuildAnalyzerRule("BC0101", "ConflictingOutputPath",
         "Two projects should not share their OutputPath nor IntermediateOutputPath locations",
         "Projects {0} and {1} have conflicting output paths: {2}.",
@@ -28,13 +31,7 @@ internal sealed class SharedOutputPathAnalyzer : BuildAnalyzer
         /* This is it - no custom configuration */
     }
 
-    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext)
-    {
-        registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
-    }
-
-    private readonly Dictionary<string, string> _projectsPerOutputPath = new(StringComparer.CurrentCultureIgnoreCase);
-    private readonly HashSet<string> _projects = new(StringComparer.CurrentCultureIgnoreCase);
+    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext) => registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
 
     private void EvaluatedPropertiesAction(BuildCheckDataContext<EvaluatedPropertiesAnalysisData> context)
     {

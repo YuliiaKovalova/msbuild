@@ -7,7 +7,6 @@ using System.Linq;
 using Microsoft.Build.BackEnd.Logging;
 using Microsoft.Build.Experimental.BuildCheck.Acquisition;
 using Microsoft.Build.Experimental.BuildCheck.Utilities;
-using Microsoft.Build.Experimental.BuildCheck;
 using Microsoft.Build.Framework;
 
 namespace Microsoft.Build.Experimental.BuildCheck.Infrastructure;
@@ -70,6 +69,9 @@ internal sealed class BuildCheckConnectorLogger : ILogger
         }
     }
 
+    private void HandleEnvironmentVariableReadEvent(EnvironmentVariableReadEventArgs eventArgs) =>
+        _buildCheckManager.ProcessEvaluationEventArgs(_loggingContextFactory.CreateLoggingContext(eventArgs.BuildEventContext!), eventArgs);
+
     private void HandleBuildCheckTracingEvent(BuildCheckTracingEventArgs eventArgs)
     {
         if (!eventArgs.IsAggregatedGlobalReport)
@@ -78,26 +80,20 @@ internal sealed class BuildCheckConnectorLogger : ILogger
         }
     }
 
-    private void HandleTaskStartedEvent(TaskStartedEventArgs eventArgs)
-    {
+    private void HandleTaskStartedEvent(TaskStartedEventArgs eventArgs) =>
         _buildCheckManager.ProcessTaskStartedEventArgs(
             _loggingContextFactory.CreateLoggingContext(eventArgs.BuildEventContext!),
             eventArgs);
-    }
 
-    private void HandleTaskFinishedEvent(TaskFinishedEventArgs eventArgs)
-    {
+    private void HandleTaskFinishedEvent(TaskFinishedEventArgs eventArgs) =>
         _buildCheckManager.ProcessTaskFinishedEventArgs(
             _loggingContextFactory.CreateLoggingContext(eventArgs.BuildEventContext!),
             eventArgs);
-    }
 
-    private void HandleTaskParameterEvent(TaskParameterEventArgs eventArgs)
-    {
+    private void HandleTaskParameterEvent(TaskParameterEventArgs eventArgs) =>
         _buildCheckManager.ProcessTaskParameterEventArgs(
             _loggingContextFactory.CreateLoggingContext(eventArgs.BuildEventContext!),
             eventArgs);
-    }
 
     private bool IsMetaProjFile(string? projectFile) => !string.IsNullOrEmpty(projectFile) && projectFile!.EndsWith(".metaproj", StringComparison.OrdinalIgnoreCase);
 
@@ -113,10 +109,8 @@ internal sealed class BuildCheckConnectorLogger : ILogger
 
     private void EventSource_BuildFinished(object sender, BuildFinishedEventArgs e)
     {
-        LoggingContext loggingContext = _loggingContextFactory.CreateLoggingContext(GetBuildEventContext(e));
-
         _stats.Merge(_buildCheckManager.CreateAnalyzerTracingStats(), (span1, span2) => span1 + span2);
-        LogAnalyzerStats(loggingContext);
+        LogAnalyzerStats(_loggingContextFactory.CreateLoggingContext(GetBuildEventContext(e)));
     }
 
     private void LogAnalyzerStats(LoggingContext loggingContext)
@@ -149,10 +143,8 @@ internal sealed class BuildCheckConnectorLogger : ILogger
         loggingContext.LogCommentFromText(MessageImportance.Low, analyzerData);
     }
 
-    private string BuildCsvString(string title, Dictionary<string, TimeSpan> rowData)
-    {
-        return title + Environment.NewLine + String.Join(Environment.NewLine, rowData.Select(a => $"{a.Key},{a.Value}")) + Environment.NewLine;
-    }
+    private string BuildCsvString(string title, Dictionary<string, TimeSpan> rowData) =>
+         title + Environment.NewLine + String.Join(Environment.NewLine, rowData.Select(a => $"{a.Key},{a.Value}")) + Environment.NewLine;
 
     private Dictionary<Type, Action<BuildEventArgs>> GetBuildEventHandlers() => new()
     {
@@ -165,6 +157,7 @@ internal sealed class BuildCheckConnectorLogger : ILogger
         { typeof(TaskStartedEventArgs), (BuildEventArgs e) => HandleTaskStartedEvent((TaskStartedEventArgs)e) },
         { typeof(TaskFinishedEventArgs), (BuildEventArgs e) => HandleTaskFinishedEvent((TaskFinishedEventArgs)e) },
         { typeof(TaskParameterEventArgs), (BuildEventArgs e) => HandleTaskParameterEvent((TaskParameterEventArgs)e) },
+        { typeof(EnvironmentVariableReadEventArgs), (BuildEventArgs e) => HandleEnvironmentVariableReadEvent((EnvironmentVariableReadEventArgs)e) },
     };
 
     private BuildEventContext GetBuildEventContext(BuildEventArgs e) => e.BuildEventContext

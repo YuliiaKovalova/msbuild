@@ -40,6 +40,10 @@ internal interface IBuildCheckManager
         AnalyzerLoggingContext buildAnalysisContext,
         ProjectEvaluationFinishedEventArgs projectEvaluationFinishedEventArgs);
 
+    void ProcessEvaluationEventArgs(
+        AnalyzerLoggingContext buildAnalysisContext,
+        BuildMessageEventArgs projectEvaluationEventArgs);
+
     void ProcessTaskStartedEventArgs(
         AnalyzerLoggingContext buildAnalysisContext,
         TaskStartedEventArgs taskStartedEventArgs);

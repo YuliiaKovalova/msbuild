@@ -33,14 +33,30 @@ namespace Microsoft.Build.Framework
             string message,
             string helpKeyword = null,
             string senderName = null,
-            MessageImportance importance = MessageImportance.Low) : base(message, helpKeyword, senderName, importance)
+            MessageImportance importance = MessageImportance.Low,
+            string file = null,
+            int line = 0) : base(message, helpKeyword, senderName, importance)
         {
-            this.EnvironmentVariableName = environmentVariableName;
+            EnvironmentVariableName = environmentVariableName;
+            Line = line;
+            File = file;
         }
 
         /// <summary>
         /// The name of the environment variable that was read.
         /// </summary>
         public string EnvironmentVariableName { get; set; }
+
+        /// <summary>
+        /// The data about the environment variable origins.
+        /// </summary>
+        public string File { get; set; }
+
+        /// <summary>
+        /// The line number where this element exists in its file.
+        /// The first line is numbered 1.
+        /// Zero indicates "unknown location".
+        /// </summary>
+        public int Line { get; set; }
     }
 }

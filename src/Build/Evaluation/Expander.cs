@@ -1581,6 +1581,7 @@ namespace Microsoft.Build.Evaluation
                     if (property is ProjectPropertyInstance.EnvironmentDerivedProjectPropertyInstance environmentDerivedProperty)
                     {
                         environmentDerivedProperty.loggingContext = propertiesUseTracker.LoggingContext;
+                        environmentDerivedProperty.elementLocation = elementLocation;
                     }
 
                     propertyValue = property.EvaluatedValueEscaped;

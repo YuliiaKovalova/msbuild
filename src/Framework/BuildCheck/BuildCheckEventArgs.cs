@@ -159,12 +159,11 @@ internal sealed class BuildCheckResultError : BuildErrorEventArgs
 
 internal sealed class BuildCheckResultMessage : BuildMessageEventArgs
 {
-    public BuildCheckResultMessage(IBuildCheckResult result)
-    {
-        this.Message = result.FormatMessage();
-    }
+    public BuildCheckResultMessage(IBuildCheckResult result) => this.Message = result.FormatMessage();
 
     internal BuildCheckResultMessage() { }
+
+    public override string? Message { get; protected set; }
 
     internal override void WriteToStream(BinaryWriter writer)
     {
@@ -179,6 +178,4 @@ internal sealed class BuildCheckResultMessage : BuildMessageEventArgs
 
         Message = reader.ReadString();
     }
-
-    public override string? Message { get; protected set; }
 }

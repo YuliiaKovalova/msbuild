@@ -13,8 +13,15 @@ public class EvaluatedPropertiesAnalysisData : AnalysisData
 {
     internal EvaluatedPropertiesAnalysisData(
         string projectFilePath,
-        IReadOnlyDictionary<string, string> evaluatedProperties) :
-        base(projectFilePath) => EvaluatedProperties = evaluatedProperties;
+        IReadOnlyDictionary<string, string> evaluatedProperties,
+        IReadOnlyDictionary<string, string> evaluatedEnvironmentVariables)
+        : base(projectFilePath)
+    {
+        EvaluatedProperties = evaluatedProperties;
+        EvaluatedEnvironmentVariables = evaluatedEnvironmentVariables;
+    }
 
     public IReadOnlyDictionary<string, string> EvaluatedProperties { get; }
+
+    public IReadOnlyDictionary<string, string> EvaluatedEnvironmentVariables { get; }
 }

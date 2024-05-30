@@ -133,7 +133,8 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
         [
             // BuildCheckDataSource.EventArgs
             [
-                ([SharedOutputPathAnalyzer.SupportedRule.Id], SharedOutputPathAnalyzer.SupportedRule.DefaultConfiguration.IsEnabled ?? false, Construct<SharedOutputPathAnalyzer>)
+                ([SharedOutputPathAnalyzer.SupportedRule.Id], SharedOutputPathAnalyzer.SupportedRule.DefaultConfiguration.IsEnabled ?? false, Construct<SharedOutputPathAnalyzer>),
+                ([NoEnvironmentVariablePropertyAnalyzer.SupportedRule.Id], NoEnvironmentVariablePropertyAnalyzer.SupportedRule.DefaultConfiguration.IsEnabled ?? false, Construct<NoEnvironmentVariablePropertyAnalyzer>)
             ],
             // BuildCheckDataSource.Execution
             []
@@ -199,7 +200,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
                         instance.SupportedRules.Select(r => r.Id).ToArray(),
                         instance.SupportedRules.Any(r => r.DefaultConfiguration.IsEnabled == true)));
                     _loggingService.LogComment(buildEventContext, MessageImportance.Normal, "CustomAnalyzerSuccessfulAcquisition", instance.FriendlyName);
-                }     
+                }
             }
         }
 
@@ -344,6 +345,14 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
             => _buildEventsProcessor
                 .ProcessTaskParameterEventArgs(buildAnalysisContext, taskParameterEventArgs);
 
+        public void ProcessEvaluationEventArgs(AnalyzerLoggingContext buildAnalysisContext, BuildMessageEventArgs projectEvaluationEventArgs)
+        {
+            if (projectEvaluationEventArgs is EnvironmentVariableReadEventArgs evr)
+            {
+                _buildEventsProcessor.ProcessEnvironmentVariableReadEventArgs(evr.EnvironmentVariableName, evr?.Message ?? string.Empty);
+            }
+        }
+
         public Dictionary<string, TimeSpan> CreateAnalyzerTracingStats()
         {
             foreach (BuildAnalyzerFactoryContext analyzerFactoryContext in _analyzersRegistry)
@@ -394,7 +403,6 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
          * Following methods are for future use (should we decide to approach in-execution analysis)
          *
          */
-
 
         public void EndProjectEvaluation(BuildCheckDataSource buildCheckDataSource, BuildEventContext buildEventContext)
         {

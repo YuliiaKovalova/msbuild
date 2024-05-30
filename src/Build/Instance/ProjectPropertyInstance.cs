@@ -91,7 +91,8 @@ namespace Microsoft.Build.Execution
             {
                 if (this is EnvironmentDerivedProjectPropertyInstance envProperty && envProperty.loggingContext?.IsValid == true && !envProperty._loggedEnvProperty && !Traits.LogAllEnvironmentVariables)
                 {
-                    EnvironmentVariableReadEventArgs args = new(Name, _escapedValue);
+                    Debugger.Launch();
+                    EnvironmentVariableReadEventArgs args = new(Name, _escapedValue, file: envProperty.elementLocation.File, line: envProperty.elementLocation.Line);
                     args.BuildEventContext = envProperty.loggingContext.BuildEventContext;
                     envProperty.loggingContext.LogBuildEvent(args);
                     envProperty._loggedEnvProperty = true;
@@ -344,10 +345,7 @@ namespace Microsoft.Build.Execution
         internal class EnvironmentDerivedProjectPropertyInstance : ProjectPropertyInstance
         {
             internal EnvironmentDerivedProjectPropertyInstance(string name, string escapedValue, LoggingContext loggingContext)
-                : base(name, escapedValue)
-            {
-                this.loggingContext = loggingContext;
-            }
+                : base(name, escapedValue) => this.loggingContext = loggingContext;
 
             /// <summary>
             /// Whether this object can be changed. An immutable object cannot be made mutable.
@@ -361,6 +359,8 @@ namespace Microsoft.Build.Execution
             internal bool _loggedEnvProperty = false;
 
             internal LoggingContext loggingContext;
+
+            internal IElementLocation elementLocation;
         }
     }
 }
