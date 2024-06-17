@@ -32,9 +32,7 @@ public class EndToEndTests : IDisposable
     public void Dispose() => _env.Dispose();
 
     [Theory]
-    //[InlineData(true, true)]
     [InlineData(false, true)]
-    //[InlineData(false, false)]
     public void SampleAnalyzerIntegrationTest(bool buildInOutOfProcessNode, bool analysisRequested)
     {
         string contents = $"""

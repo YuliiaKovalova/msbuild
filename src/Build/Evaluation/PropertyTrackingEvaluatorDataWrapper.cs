@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Build.BackEnd;
 using Microsoft.Build.BackEnd.Components.Logging;
 using Microsoft.Build.BackEnd.Logging;
@@ -210,6 +211,8 @@ namespace Microsoft.Build.Evaluation
             {
                 return;
             }
+
+            Debugger.Launch();
 
             var args = new EnvironmentVariableReadEventArgs(
                 name,

@@ -29,7 +29,6 @@ internal sealed class NoEnvironmentVariablePropertyAnalyzer : BuildAnalyzer
 
     private void EvaluatedPropertiesAction(BuildCheckDataContext<EvaluatedPropertiesAnalysisData> context)
     {
-        Debugger.Launch();
         if (context.Data.EvaluatedEnvironmentVariables.Count != 0)
         {
             foreach (var kv in context.Data.EvaluatedEnvironmentVariables)

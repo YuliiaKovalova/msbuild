@@ -91,8 +91,7 @@ namespace Microsoft.Build.Execution
             {
                 if (this is EnvironmentDerivedProjectPropertyInstance envProperty && envProperty.loggingContext?.IsValid == true && !envProperty._loggedEnvProperty && !Traits.LogAllEnvironmentVariables)
                 {
-                    Debugger.Launch();
-                    EnvironmentVariableReadEventArgs args = new(Name, _escapedValue, file: envProperty.elementLocation.File, line: envProperty.elementLocation.Line);
+                    EnvironmentVariableReadEventArgs args = new(Name, _escapedValue);
                     args.BuildEventContext = envProperty.loggingContext.BuildEventContext;
                     envProperty.loggingContext.LogBuildEvent(args);
                     envProperty._loggedEnvProperty = true;
