@@ -13,120 +13,59 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Build.BuildCheck.UnitTests;
 
-public class EndToEndTests : IDisposable
+public class EndToEndTests
 {
-    private readonly TestEnvironment _env;
+    private readonly ITestOutputHelper _testOutput;
 
-    public EndToEndTests(ITestOutputHelper output)
-    {
-        _env = TestEnvironment.Create(output);
-
-        // this is needed to ensure the binary logger does not pollute the environment
-        _env.WithEnvironmentInvariant();
-    }
+    public EndToEndTests(ITestOutputHelper output) => _testOutput = output;
 
     private static string AssemblyLocation { get; } = Path.Combine(Path.GetDirectoryName(typeof(EndToEndTests).Assembly.Location) ?? AppContext.BaseDirectory);
 
     private static string TestAssetsRootPath { get; } = Path.Combine(AssemblyLocation, "TestAssets");
 
-    public void Dispose() => _env.Dispose();
-
     [Theory]
     [InlineData(false, true)]
     public void SampleAnalyzerIntegrationTest(bool buildInOutOfProcessNode, bool analysisRequested)
     {
-        string contents = $"""
-            <Project Sdk="Microsoft.NET.Sdk" DefaultTargets="Hello">
-                
-                <PropertyGroup>
-                <OutputType>Exe</OutputType>
-                <TargetFramework>net8.0</TargetFramework>
-                <ImplicitUsings>enable</ImplicitUsings>
-                <Nullable>enable</Nullable>
-                </PropertyGroup>
-                  
-                <PropertyGroup Condition="$(Test) == true">
-                <TestProperty>Test</TestProperty>
-                </PropertyGroup>
-                 
-                <ItemGroup>
-                <ProjectReference Include=".\FooBar-Copy.csproj" />
-                </ItemGroup>
-                  
-                <Target Name="Hello">
-                <Message Importance="High" Condition="$(Test2) == true" Text="XYZABC" />
-                </Target>
-                
-            </Project>
-            """;
-
-        string contents2 = $"""
-            <Project Sdk="Microsoft.NET.Sdk">
-                <PropertyGroup>
-                <OutputType>Exe</OutputType>
-                <TargetFramework>net8.0</TargetFramework>
-                <ImplicitUsings>enable</ImplicitUsings>
-                <Nullable>enable</Nullable>
-                <Test>$(DOTNET_ROOT)</Test>
-                </PropertyGroup>
-                                 
-                <PropertyGroup Condition="$(Test) == true">
-                <TestProperty>Test</TestProperty>
-                </PropertyGroup>
-                                
-                <ItemGroup>
-                <Reference Include="bin/foo.dll" />
-                </ItemGroup>
-                                
-                <Target Name="Hello">
-                <Message Importance="High" Condition="$(Test2) == true" Text="XYZABC" />
-                </Target>
-                               
-            </Project>
-            """;
-        TransientTestFolder workFolder = _env.CreateFolder(createFolder: true);
-        TransientTestFile projectFile = _env.CreateFile(workFolder, "FooBar.csproj", contents);
-        TransientTestFile projectFile2 = _env.CreateFile(workFolder, "FooBar-Copy.csproj", contents2);
-
-        TransientTestFile config = _env.CreateFile(workFolder, ".editorconfig",
-            """
-            root=true
-
-            [*.csproj]
-            build_check.BC0101.IsEnabled=true
-            build_check.BC0101.Severity=warning
-
-            build_check.BC0103.IsEnabled=true
-            build_check.BC0103.Severity=warning
-
-            build_check.COND0543.IsEnabled=false
-            build_check.COND0543.Severity=Error
-            build_check.COND0543.EvaluationAnalysisScope=AnalyzedProjectOnly
-            build_check.COND0543.CustomSwitch=QWERTY
-
-            build_check.BLA.IsEnabled=false
-            """);
-
-        // OSX links /var into /private, which makes Path.GetTempPath() return "/var..." but Directory.GetCurrentDirectory return "/private/var...".
-        // This discrepancy breaks path equality checks in analyzers if we pass to MSBuild full path to the initial project.
-        // See if there is a way of fixing it in the engine - tracked: https://github.com/orgs/dotnet/projects/373/views/1?pane=issue&itemId=55702688.
-        _env.SetCurrentDirectory(Path.GetDirectoryName(projectFile.Path));
-
-        _env.SetEnvironmentVariable("MSBUILDNOINPROCNODE", buildInOutOfProcessNode ? "1" : "0");
-        _env.SetEnvironmentVariable("MSBUILDLOGPROPERTIESANDITEMSAFTEREVALUATION", "1");
-        string output = RunnerUtilities.ExecBootstrapedMSBuild(
-            $"{Path.GetFileName(projectFile.Path)} /m:1 -nr:False -restore" +
-            (analysisRequested ? " -analyze" : string.Empty), out bool success, false, _env.Output, timeoutMilliseconds: 12000000);
-        _env.Output.WriteLine(output);
-        success.ShouldBeTrue();
-        // The conflicting outputs warning appears - but only if analysis was requested
-        if (analysisRequested)
+        using (var env = TestEnvironment.Create(_testOutput))
         {
-            output.ShouldContain("BC0101");
-        }
-        else
-        {
-            output.ShouldNotContain("BC0101");
+            // this is needed to ensure the binary logger does not pollute the environment
+            _ = env.WithEnvironmentInvariant();
+            _ = env.SetEnvironmentVariable("MSBUILDNOINPROCNODE", buildInOutOfProcessNode ? "1" : "0");
+            _ = env.SetEnvironmentVariable("MSBUILDLOGPROPERTIESANDITEMSAFTEREVALUATION", "1");
+
+            string contents = File.ReadAllText(Path.Combine(TestAssetsRootPath, nameof(SampleAnalyzerIntegrationTest), "Project1.csproj"));
+            string contents2 = File.ReadAllText(Path.Combine(TestAssetsRootPath, nameof(SampleAnalyzerIntegrationTest), "Project2.csproj"));
+
+            TransientTestFolder workFolder = env.CreateFolder(createFolder: true);
+            TransientTestFile projectFile = env.CreateFile(workFolder, "FooBar.csproj", contents);
+            TransientTestFile projectFile2 = env.CreateFile(workFolder, "FooBar-Copy.csproj", contents2);
+
+            // OSX links /var into /private, which makes Path.GetTempPath() return "/var..." but Directory.GetCurrentDirectory return "/private/var...".
+            // This discrepancy breaks path equality checks in analyzers if we pass to MSBuild full path to the initial project.
+            // See if there is a way of fixing it in the engine - tracked: https://github.com/orgs/dotnet/projects/373/views/1?pane=issue&itemId=55702688.
+            env.SetCurrentDirectory(Path.GetDirectoryName(projectFile.Path));
+
+            TransientTestFile config = env.CreateFile(
+                workFolder,
+                ".editorconfig",
+                File.ReadAllText(Path.Combine(TestAssetsRootPath, nameof(SampleAnalyzerIntegrationTest), ".editorconfig")));
+
+
+            string output = RunnerUtilities.ExecBootstrapedMSBuild(
+                $"{Path.GetFileName(projectFile.Path)} /m:1 -nr:False -restore" +
+                (analysisRequested ? " -analyze" : string.Empty), out bool success, false, env.Output, timeoutMilliseconds: 12000000);
+            env.Output.WriteLine(output);
+            success.ShouldBeTrue();
+            // The conflicting outputs warning appears - but only if analysis was requested
+            if (analysisRequested)
+            {
+                output.ShouldContain("BC0101");
+            }
+            else
+            {
+                output.ShouldNotContain("BC0101");
+            }
         }
     }
 
@@ -162,7 +101,7 @@ public class EndToEndTests : IDisposable
         var nugetTemplatePath = Path.Combine(analysisCandidatePath, "nugetTemplate.config");
 
         var doc = new XmlDocument();
-        doc.LoadXml(File.ReadAllText(nugetTemplatePath));
+        doc.LoadXml(nugetTemplatePath);
         if (doc.DocumentElement != null)
         {
             XmlNode? packageSourcesNode = doc.SelectSingleNode("//packageSources");

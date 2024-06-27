@@ -21,8 +21,9 @@ namespace Microsoft.Build.Framework
         public EnvironmentVariableWithLocationReadEventArgs(
             string environmentVariableName,
             string message,
-            string line,
-            string column,
+            string fileName,
+            int line,
+            int column,
             string? helpKeyword = null,
             string? senderName = null,
             MessageImportance importance = MessageImportance.Low)
