@@ -42,12 +42,5 @@ namespace Microsoft.Build.Framework
         /// The name of the environment variable that was read.
         /// </summary>
         public string EnvironmentVariableName { get; set; }
-
-        /// <summary>
-        /// The line number where this element exists in its file.
-        /// The first line is numbered 1.
-        /// Zero indicates "unknown location".
-        /// </summary>
-        public int Line { get; set; }
     }
 }

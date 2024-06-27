@@ -100,6 +100,7 @@ namespace Microsoft.Build.Evaluation
             {
                 if (this is EnvironmentDerivedProjectProperty environmentProperty && environmentProperty.loggingContext is { IsValid: true } loggingContext && !environmentProperty._loggedEnvProperty && !Traits.LogAllEnvironmentVariables)
                 {
+                    Debugger.Launch();
                     EnvironmentVariableReadEventArgs args = new(Name, EvaluatedValueEscapedInternal);
                     args.BuildEventContext = loggingContext.BuildEventContext;
                     loggingContext.LogBuildEvent(args);
