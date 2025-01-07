@@ -1919,6 +1919,15 @@ Utilization:          {0} Average Utilization: {1:###.0}</value>
   <data name="PropertyAssignment" xml:space="preserve">
     <value>Property initial value: $({0})="{1}" Source: {2}</value>
   </data>
+  <data name="ItemInclude" xml:space="preserve">
+    <value>Item include operation: "{0}". Source: "{1}". Initial Metadata: "{2}".</value>
+  </data>
+  <data name="ItemUpdate" xml:space="preserve">
+    <value>Item update operation: "{0}". Source: "{1}". Added/Updated Metadata: "{2}".</value>
+  </data>
+  <data name="ItemRemove" xml:space="preserve">
+    <value>Item remove operation: "{0}" for "{1}". Source: "{2}".</value>
+  </data>
   <data name="NuGetAssemblyNotFound" xml:space="preserve">
     <value>A required NuGet assembly '{0}' could not be loaded.</value>
   </data>

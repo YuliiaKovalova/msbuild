@@ -443,10 +443,25 @@
         <target state="translated">使用 SharingPolicy.Isolated 或 SharingPolicy.SharedSDKCache 创建的 EvaluationContext 对象不支持被传递 MSBuildFileSystemBase 文件系统。</target>
         <note />
       </trans-unit>
+      <trans-unit id="ItemInclude">
+        <source>Item include operation: "{0}". Source: "{1}". Initial Metadata: "{2}".</source>
+        <target state="new">Item include operation: "{0}". Source: "{1}". Initial Metadata: "{2}".</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ItemReferencingSelfInTarget">
         <source>MSB4120: Item '{0}' definition within target references itself via (qualified or unqualified) metadatum '{1}'. This can lead to unintended expansion and cross-applying of pre-existing items. More info: https://aka.ms/msbuild/metadata-self-ref</source>
         <target state="translated">MSB4120: 目标内的项“{0}”定义通过(限定或非限定)元数据“{1}”引用自身。这可能导致意外扩展和交叉应用预先存在的项。详细信息: https://aka.ms/msbuild/metadata-self-ref</target>
         <note>{StrBegin="MSB4120: "}</note>
+      </trans-unit>
+      <trans-unit id="ItemRemove">
+        <source>Item remove operation: "{0}" for "{1}". Source: "{2}".</source>
+        <target state="new">Item remove operation: "{0}" for "{1}". Source: "{2}".</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ItemUpdate">
+        <source>Item update operation: "{0}". Source: "{1}". Added/Updated Metadata: "{2}".</source>
+        <target state="new">Item update operation: "{0}". Source: "{1}". Added/Updated Metadata: "{2}".</target>
+        <note />
       </trans-unit>
       <trans-unit id="KillingProcessWithPid">
         <source>Killing process with pid = {0}.</source>

@@ -1,11 +1,13 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.Build.BackEnd.Components.Logging;
 using Microsoft.Build.BackEnd.Logging;
 using Microsoft.Build.Collections;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation.Context;
 using Microsoft.Build.Eventing;
+using Microsoft.Build.Experimental.BuildCheck.Infrastructure;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
 using Microsoft.Build.Shared.FileSystem;
@@ -247,11 +249,13 @@ namespace Microsoft.Build.Evaluation
         {
             private readonly LazyItemList _previous;
             private readonly MemoizedOperation _memoizedOperation;
+            private readonly LoggingContext _loggingContext;
 
-            public LazyItemList(LazyItemList previous, LazyItemOperation operation)
+            public LazyItemList(LazyItemList previous, LazyItemOperation operation, LoggingContext loggingContext)
             {
                 _previous = previous;
                 _memoizedOperation = new MemoizedOperation(operation);
+                _loggingContext = loggingContext;
             }
 
             public ImmutableList<I> GetMatchedItems(ImmutableHashSet<string> globsToIgnore)
@@ -302,7 +306,7 @@ namespace Microsoft.Build.Evaluation
                     // they would be using an operation
                     MarkAsReferenced();
 
-                    return ComputeItems(this, globsToIgnore);
+                    return ComputeItems(this, globsToIgnore, _loggingContext);
                 }
             }
 
@@ -314,7 +318,10 @@ namespace Microsoft.Build.Evaluation
             /// is to optimize the case in which as series of UpdateOperations, each of which affects a single ItemSpec, are applied to all
             /// items in the list, leading to a quadratic-time operation.
             /// </summary>
-            private static OrderedItemDataCollection.Builder ComputeItems(LazyItemList lazyItemList, ImmutableHashSet<string> globsToIgnore)
+            private static OrderedItemDataCollection.Builder ComputeItems(
+                LazyItemList lazyItemList,
+                ImmutableHashSet<string> globsToIgnore,
+                LoggingContext loggingContext)
             {
                 // Stack of operations up to the first one that's cached (exclusive)
                 Stack<LazyItemList> itemListStack = new Stack<LazyItemList>();
@@ -426,6 +433,8 @@ namespace Microsoft.Build.Evaluation
                     }
 
                     currentList._memoizedOperation.Apply(items, currentGlobsToIgnore);
+
+                    TrackItemOperation(currentList._memoizedOperation.Operation, loggingContext);
                 }
 
                 // We finished looping through the operations. Now process the final batch if necessary.
@@ -450,9 +459,37 @@ namespace Microsoft.Build.Evaluation
                 }
             }
 
-            public void MarkAsReferenced()
+            public void MarkAsReferenced() => _memoizedOperation.MarkAsReferenced();
+
+            private static void TrackItemOperation(LazyItemOperation itemOperation, LoggingContext loggingContext)
             {
-                _memoizedOperation.MarkAsReferenced();
+                if (itemOperation is IncludeOperation)
+                {
+                    loggingContext.LogComment(
+                        MessageImportance.Low,
+                        "ItemInclude",
+                        itemOperation.ItemElement.ElementName,
+                        itemOperation.Spec.ItemSpecLocation.ToString(),
+                        string.Join(";", itemOperation.ItemElement.Metadata.Select(m => m.Name + "=" + m.Value)));
+                }
+                else if (itemOperation is UpdateOperation)
+                {
+                    loggingContext.LogComment(
+                        MessageImportance.Low,
+                        "ItemUpdate",
+                        itemOperation.ItemElement.ElementName,
+                        itemOperation.Spec.ItemSpecLocation.ToString(),
+                        string.Join(";", itemOperation.ItemElement.Metadata.Select(m => m.Name + "=" + m.Value)));
+                }
+                else
+                {
+                    loggingContext.LogComment(
+                        MessageImportance.Low,
+                        "ItemRemove",
+                        itemOperation.ItemElement.ElementName,
+                        itemOperation.Spec.ItemSpecString,
+                        itemOperation.Spec.ItemSpecLocation.ToString());
+                }
             }
         }
 
@@ -525,7 +562,7 @@ namespace Microsoft.Build.Evaluation
             }
 
             _itemLists.TryGetValue(itemElement.ItemType, out LazyItemList previousItemList);
-            LazyItemList newList = new LazyItemList(previousItemList, operation);
+            LazyItemList newList = new LazyItemList(previousItemList, operation, _loggingContext);
             _itemLists[itemElement.ItemType] = newList;
         }
 

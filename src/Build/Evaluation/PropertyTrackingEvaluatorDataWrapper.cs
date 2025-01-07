@@ -150,7 +150,9 @@ namespace Microsoft.Build.Evaluation
         public PropertyDictionary<ProjectPropertyInstance> EnvironmentVariablePropertiesDictionary => _wrapped.EnvironmentVariablePropertiesDictionary;
         public void InitializeForEvaluation(IToolsetProvider toolsetProvider, EvaluationContext evaluationContext, LoggingContext loggingContext) => _wrapped.InitializeForEvaluation(toolsetProvider, evaluationContext, loggingContext);
         public void FinishEvaluation() => _wrapped.FinishEvaluation();
+
         public void AddItem(I item) => _wrapped.AddItem(item);
+
         public void AddItemIgnoringCondition(I item) => _wrapped.AddItemIgnoringCondition(item);
         public IItemDefinition<M> AddItemDefinition(string itemType) => _wrapped.AddItemDefinition(itemType);
         public void AddToAllEvaluatedPropertiesList(P property) => _wrapped.AddToAllEvaluatedPropertiesList(property);
@@ -386,7 +388,19 @@ namespace Microsoft.Build.Evaluation
             EnvironmentVariableRead = 1 << 2,
             UninitializedPropertyRead = 1 << 3,
 
-            All = PropertyReassignment | PropertyInitialValueSet | EnvironmentVariableRead | UninitializedPropertyRead
+            All = PropertyReassignment | PropertyInitialValueSet | EnvironmentVariableRead | UninitializedPropertyRead,
+        }
+
+        [Flags]
+        private enum ItemTrackingSetting
+        {
+            None = 0,
+
+            ItemIncludeEvaluation = 1,
+            ItemUpdateEvaluation = 1 << 1,
+            ItemRemoveEvaluation = 1 << 2,
+
+            All = ItemIncludeEvaluation | ItemUpdateEvaluation | ItemRemoveEvaluation,
         }
     }
 }
