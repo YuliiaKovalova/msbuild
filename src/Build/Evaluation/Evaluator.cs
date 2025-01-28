@@ -213,7 +213,6 @@ namespace Microsoft.Build.Evaluation
             ILoggingService loggingService,
             BuildEventContext buildEventContext)
         {
-            //Debugger.Launch();
             ErrorUtilities.VerifyThrowInternalNull(data);
             ErrorUtilities.VerifyThrowInternalNull(projectRootElementCache);
             ErrorUtilities.VerifyThrowInternalNull(evaluationContext);
