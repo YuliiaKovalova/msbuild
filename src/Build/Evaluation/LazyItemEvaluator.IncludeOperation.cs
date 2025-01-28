@@ -186,8 +186,8 @@ namespace Microsoft.Build.Evaluation
                         MessageImportance.Low,
                         "ItemInclude",
                         _itemElement.ItemType,
-                        item.EvaluatedInclude,
-                        GetMetadataString(item));
+                        Spec.ItemSpecLocation.ToString(),
+                        $"Item include {item.EvaluatedInclude} | {GetMetadataString(item)}");
                 }
             }
         }

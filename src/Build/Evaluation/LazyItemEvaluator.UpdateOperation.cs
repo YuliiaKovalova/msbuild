@@ -90,7 +90,7 @@ namespace Microsoft.Build.Evaluation
                             MessageImportance.Low,
                             "ItemUpdate",
                             _itemElement.ItemType,
-                            item.Item.EvaluatedInclude,
+                            Spec.ItemSpecLocation.ToString(),
                             $"Before: {GetMetadataString(item.Item)}\nAfter: {GetMetadataString(clonedData.Item)}");
 
                         return clonedData;

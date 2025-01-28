@@ -59,7 +59,7 @@ namespace Microsoft.Build.Evaluation
                             MessageImportance.Low,
                             "ItemRemove",
                             _itemElement.ItemType,
-                            _itemSpec.ItemSpecString,
+                            Spec.ItemSpecLocation.ToString(),
                             $"Operation: Remove by item reference");
 
                         // Then log each item that will be removed
@@ -69,8 +69,8 @@ namespace Microsoft.Build.Evaluation
                                 MessageImportance.Low,
                                 "ItemRemove",
                                 _itemElement.ItemType,
-                                item.Item.EvaluatedInclude,
-                                $"Operation: Reference @({_itemElement.ItemType}) | {GetMetadataString(item.Item)}");
+                                Spec.ItemSpecLocation.ToString(),
+                                $"EvaluatedInclude {item.Item.EvaluatedInclude} | Operation: Reference @({_itemElement.ItemType}) | {GetMetadataString(item.Item)}");
                         }
 
                         listBuilder.Clear();
@@ -87,8 +87,8 @@ namespace Microsoft.Build.Evaluation
                                 MessageImportance.Low,
                                 "ItemRemove",
                                 _itemElement.ItemType,
-                                globFragment.TextFragment,
-                                "Operation: Remove by glob pattern");
+                                Spec.ItemSpecLocation.ToString(),
+                                $"Operation: Remove by glob pattern: {globFragment.TextFragment}");
                         }
 
                         // Handle direct file references
@@ -98,8 +98,8 @@ namespace Microsoft.Build.Evaluation
                                 MessageImportance.Low,
                                 "ItemRemove",
                                 _itemElement.ItemType,
-                                valueFragment.TextFragment,
-                                "Operation: Direct file removal");
+                                Spec.ItemSpecLocation.ToString(),
+                                $"Operation: Direct file removal: {valueFragment.TextFragment}");
                         }
 
                         // Handle item references that aren't @(ItemType) style
@@ -109,8 +109,8 @@ namespace Microsoft.Build.Evaluation
                                 MessageImportance.Low,
                                 "ItemRemove",
                                 _itemElement.ItemType,
-                                itemFragment.Capture.Value,
-                                "Operation: Remove by item expression");
+                                Spec.ItemSpecLocation.ToString(),
+                                $"Operation: Remove by item expression: {itemFragment.Capture.Value}");
                         }
                     }
                 }
@@ -130,8 +130,8 @@ namespace Microsoft.Build.Evaluation
                             MessageImportance.Low,
                             "ItemRemove",
                             _itemElement.ItemType,
-                            item.Item.EvaluatedInclude,
-                            $"Operation: {reason} | {GetMetadataString(item.Item)}");
+                            Spec.ItemSpecLocation.ToString(),
+                            $"Include {item.Item.EvaluatedInclude} | Operation: {reason} | {GetMetadataString(item.Item)}");
                     }
                 }
 
