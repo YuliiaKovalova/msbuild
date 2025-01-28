@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Eventing;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
 
 #nullable disable
@@ -165,7 +166,7 @@ namespace Microsoft.Build.Evaluation
                 }
             }
 
-            protected void DecorateItemsWithMetadata(IEnumerable<ItemBatchingContext> itemBatchingContexts, ImmutableArray<ProjectMetadataElement> metadata, bool? needToExpandMetadata = null)
+            protected void DecorateItemsWithMetadata(IEnumerable<ItemBatchingContext> itemBatchingContexts, ImmutableArray<ProjectMetadataElement> metadata, bool? needToExpandMetadata = null, bool isInclude = false)
             {
                 if (metadata.Length > 0)
                 {
@@ -210,6 +211,14 @@ namespace Microsoft.Build.Evaluation
                             {
                                 if (!EvaluateCondition(metadataElement.Condition, metadataElement, metadataExpansionOptions, ParserOptions.AllowAll, _expander, _lazyEvaluator))
                                 {
+                                    // Log skipped metadata due to condition
+                                    _lazyEvaluator._loggingContext?.LogComment(
+                                        MessageImportance.Low,
+                                        isInclude ? "ItemInclude" : "ItemUpdate",
+                                        _itemElement.ItemType,
+                                        itemContext.OperationItem.EvaluatedInclude,
+                                        $"Skipped metadata: {metadataElement.Name} (condition: {metadataElement.Condition})");
+
                                     continue;
                                 }
 
@@ -217,6 +226,8 @@ namespace Microsoft.Build.Evaluation
 
                                 itemContext.OperationItem.SetMetadata(metadataElement, FileUtilities.MaybeAdjustFilePath(evaluatedValue, metadataElement.ContainingProject.DirectoryPath));
                             }
+
+                            // Maybe need to log the item after metadata expansion
                         }
 
                         // End of legal area for metadata expressions.
@@ -345,6 +356,13 @@ namespace Microsoft.Build.Evaluation
                 }
 
                 return true;
+            }
+
+            protected static string GetMetadataString(I item)
+            {
+                return item.Metadata.Any()
+                    ? string.Join(";", item.Metadata.Select(m => $"{m.Key}={m.EscapedValue}"))
+                    : "<no metadata>";
             }
         }
     }

@@ -126,10 +126,25 @@ namespace Microsoft.Build.Evaluation
                                 MSBuildEventSource.Log.ExpandGlobStop(_rootDirectory ?? string.Empty, glob, string.Join(", ", excludePatternsForGlobs));
                             }
 
+                            _lazyEvaluator?._loggingContext?.LogComment(
+                               MessageImportance.Low,
+                               "ItemInclude",
+                               _itemElement.ItemType,
+                               glob,
+                               $"Root: {_rootDirectory ?? string.Empty} | Excludes: {string.Join(", ", excludePatternsForGlobs ?? Enumerable.Empty<string>())}");
+
                             foreach (string includeSplitFileEscaped in includeSplitFilesEscaped)
                             {
                                 itemsToAdd ??= ImmutableArray.CreateBuilder<I>();
                                 itemsToAdd.Add(_itemFactory.CreateItem(includeSplitFileEscaped, glob, _itemElement.ContainingProject.FullPath));
+
+                                // Log each materialized file
+                                _lazyEvaluator?._loggingContext?.LogComment(
+                                    MessageImportance.Low,
+                                    "ItemInclude",
+                                    _itemElement.ItemType,
+                                    includeSplitFileEscaped,
+                                    $"From pattern: {glob}");
                             }
                         }
                     }
@@ -157,7 +172,7 @@ namespace Microsoft.Build.Evaluation
 
             protected override void MutateItems(ImmutableArray<I> items)
             {
-                DecorateItemsWithMetadata(items.Select(i => new ItemBatchingContext(i)), _metadata);
+                DecorateItemsWithMetadata(items.Select(i => new ItemBatchingContext(i)), _metadata, true);
             }
 
             protected override void SaveItems(ImmutableArray<I> items, OrderedItemDataCollection.Builder listBuilder)
@@ -165,6 +180,14 @@ namespace Microsoft.Build.Evaluation
                 foreach (var item in items)
                 {
                     listBuilder.Add(new ItemData(item, _itemElement, _elementOrder, _conditionResult));
+
+                    // Track each included item
+                    _lazyEvaluator._loggingContext?.LogComment(
+                        MessageImportance.Low,
+                        "ItemInclude",
+                        _itemElement.ItemType,
+                        item.EvaluatedInclude,
+                        GetMetadataString(item));
                 }
             }
         }

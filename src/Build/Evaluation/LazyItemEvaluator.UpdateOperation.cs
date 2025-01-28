@@ -84,6 +84,15 @@ namespace Microsoft.Build.Evaluation
                     {
                         ItemData clonedData = UpdateItem(item, matchResult.CapturedItemsFromReferencedItemTypes);
                         DecorateItemsWithMetadata(_itemsToUpdate.ToImmutableList(), _metadata, _needToExpandMetadataForEachItem);
+
+                        // Track the update operation
+                        _lazyEvaluator._loggingContext?.LogComment(
+                            MessageImportance.Low,
+                            "ItemUpdate",
+                            _itemElement.ItemType,
+                            item.Item.EvaluatedInclude,
+                            $"Before: {GetMetadataString(item.Item)}\nAfter: {GetMetadataString(clonedData.Item)}");
+
                         return clonedData;
                     }
                 }

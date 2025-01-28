@@ -51,26 +51,71 @@ namespace Microsoft.Build.Evaluation
                 bool matchingOnMetadata = _matchOnMetadata.Any();
                 if (!matchingOnMetadata)
                 {
+                    // If we're removing all items via @(ItemType), show what's being removed
                     if (ItemspecContainsASingleBareItemReference(_itemSpec, _itemElement.ItemType))
                     {
-                        // Perf optimization: If the Remove operation references itself (e.g. <I Remove="@(I)"/>)
-                        // then all items are removed and matching is not necessary
+                        // First log the operation itself
+                        _lazyEvaluator._loggingContext?.LogComment(
+                            MessageImportance.Low,
+                            "ItemRemove",
+                            _itemElement.ItemType,
+                            _itemSpec.ItemSpecString,
+                            $"Operation: Remove by item reference");
+
+                        // Then log each item that will be removed
+                        foreach (var item in listBuilder)
+                        {
+                            _lazyEvaluator._loggingContext?.LogComment(
+                                MessageImportance.Low,
+                                "ItemRemove",
+                                _itemElement.ItemType,
+                                item.Item.EvaluatedInclude,
+                                $"Operation: Reference @({_itemElement.ItemType}) | {GetMetadataString(item.Item)}");
+                        }
+
                         listBuilder.Clear();
                         return;
                     }
 
-                    if (listBuilder.Count >= Traits.Instance.DictionaryBasedItemRemoveThreshold)
+                    // For each fragment in the Remove operation
+                    foreach (var fragment in _itemSpec.Fragments)
                     {
-                        // Perf optimization: If the number of items in the running list is large, construct a dictionary,
-                        // enumerate all items referenced by the item spec, and perform dictionary look-ups to find items
-                        // to remove.
-                        IList<string> matches = _itemSpec.IntersectsWith(listBuilder.Dictionary);
-                        listBuilder.RemoveAll(matches);
-                        return;
+                        // Handle wildcards/globs
+                        if (fragment is GlobFragment globFragment)
+                        {
+                            _lazyEvaluator._loggingContext?.LogComment(
+                                MessageImportance.Low,
+                                "ItemRemove",
+                                _itemElement.ItemType,
+                                globFragment.TextFragment,
+                                "Operation: Remove by glob pattern");
+                        }
+
+                        // Handle direct file references
+                        else if (fragment is ValueFragment valueFragment)
+                        {
+                            _lazyEvaluator._loggingContext?.LogComment(
+                                MessageImportance.Low,
+                                "ItemRemove",
+                                _itemElement.ItemType,
+                                valueFragment.TextFragment,
+                                "Operation: Direct file removal");
+                        }
+
+                        // Handle item references that aren't @(ItemType) style
+                        else if (fragment is ItemSpec<P, I>.ItemExpressionFragment itemFragment)
+                        {
+                            _lazyEvaluator._loggingContext?.LogComment(
+                                MessageImportance.Low,
+                                "ItemRemove",
+                                _itemElement.ItemType,
+                                itemFragment.Capture.Value,
+                                "Operation: Remove by item expression");
+                        }
                     }
                 }
 
-                // todo Perf: do not match against the globs: https://github.com/dotnet/msbuild/issues/2329
+                // Track actual items being removed
                 HashSet<I> items = null;
                 foreach (ItemData item in listBuilder)
                 {
@@ -79,8 +124,17 @@ namespace Microsoft.Build.Evaluation
                     {
                         items ??= new HashSet<I>();
                         items.Add(item.Item);
+
+                        var reason = matchingOnMetadata ? "Remove by metadata match" : "Remove by pattern match";
+                        _lazyEvaluator._loggingContext?.LogComment(
+                            MessageImportance.Low,
+                            "ItemRemove",
+                            _itemElement.ItemType,
+                            item.Item.EvaluatedInclude,
+                            $"Operation: {reason} | {GetMetadataString(item.Item)}");
                     }
                 }
+
                 if (items is not null)
                 {
                     listBuilder.RemoveAll(items);

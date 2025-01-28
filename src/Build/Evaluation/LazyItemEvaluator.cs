@@ -338,9 +338,6 @@ namespace Microsoft.Build.Evaluation
                     OrderedItemDataCollection itemsFromCache;
                     if (currentList._memoizedOperation.TryGetFromCache(globsToIgnoreFromFutureOperations, out itemsFromCache))
                     {
-                        // Track the cached operation
-                        TrackItemOperation(currentList._memoizedOperation.Operation, loggingContext);
-
                         // the base items on top of which to apply the uncached operations are the items of the first operation that is cached
                         items = itemsFromCache.ToBuilder();
                         break;
@@ -408,9 +405,6 @@ namespace Microsoft.Build.Evaluation
                         }
                         if (!addToBatch)
                         {
-                            // Track wildcard operation before processing
-                            TrackItemOperation(op, loggingContext);
-
                             // We found a wildcard. Remove any fragments associated with the current operation and process them later.
                             for (int j = 0; j < i; j++)
                             {
@@ -439,9 +433,6 @@ namespace Microsoft.Build.Evaluation
                     }
 
                     currentList._memoizedOperation.Apply(items, currentGlobsToIgnore);
-
-                    // Track non-wildcard operation after applying
-                    TrackItemOperation(currentList._memoizedOperation.Operation, loggingContext);
                 }
 
                 // We finished looping through the operations. Now process the final batch if necessary.
@@ -457,12 +448,6 @@ namespace Microsoft.Build.Evaluation
             {
                 if (itemsWithNoWildcards.Count > 0)
                 {
-                    foreach (var operation in itemsWithNoWildcards.Values)
-                    {
-                        // Track each non-wildcard update operation
-                        TrackItemOperation(operation, loggingContext);
-                    }
-
                     for (int i = 0; i < items.Count; i++)
                     {
                         string fullPath = FileUtilities.NormalizePathForComparisonNoThrow(items[i].Item.EvaluatedInclude, items[i].Item.ProjectDirectory);
@@ -476,29 +461,6 @@ namespace Microsoft.Build.Evaluation
             }
 
             public void MarkAsReferenced() => _memoizedOperation.MarkAsReferenced();
-
-            private static void TrackItemOperation(LazyItemOperation itemOperation, LoggingContext loggingContext)
-            {
-                var operationType = itemOperation switch
-                {
-                    IncludeOperation => "ItemInclude",
-                    UpdateOperation => "ItemUpdate",
-                    RemoveOperation => "ItemRemove",
-                    _ => "Unknown"
-                };
-
-                var metadata = itemOperation.ItemElement.Metadata.Any()
-                    ? string.Join(";", itemOperation.ItemElement.Metadata.Select(m => m.Name + "=" + m.Value))
-                    : "<no metadata>";
-
-
-                loggingContext.LogComment(
-                    MessageImportance.Low,
-                    operationType,
-                    itemOperation.ItemElement.ElementName,
-                    itemOperation.Spec.ItemSpecLocation.ToString(),
-                    metadata);
-            }
         }
 
         private class OperationBuilder
