@@ -22,24 +22,18 @@ internal sealed class UntrustedLocationCheck : Check
 
     public override IReadOnlyList<CheckRule> SupportedRules { get; } = new List<CheckRule>() { SupportedRule };
 
-    public override void Initialize(ConfigurationContext configurationContext)
-    {
-        checkedProjects.Clear();
-    }
+    public override void Initialize(ConfigurationContext configurationContext) => checkedProjects.Clear();
 
     internal override bool IsBuiltIn => true;
 
-    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext)
-    {
-        registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
-    }
+    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext) => registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
 
     private HashSet<string> checkedProjects = new HashSet<string>();
 
     private void EvaluatedPropertiesAction(BuildCheckDataContext<EvaluatedPropertiesCheckData> context)
     {
         if (checkedProjects.Add(context.Data.ProjectFilePath) &&
-            context.Data.ProjectFileDirectory.StartsWith(PathsHelper.Downloads, Shared.FileUtilities.PathComparison))
+            context.Data.ProjectFileDirectory.StartsWith(PathsHelper.Downloads, FileUtilities.PathComparison))
         {
             context.ReportResult(BuildCheckResult.Create(
                 SupportedRule,
@@ -55,7 +49,7 @@ internal sealed class UntrustedLocationCheck : Check
 
         /// <summary>
         /// Returns the current Downloads location. Makes sure the path doesn't end with directory separator
-        ///   (to prevent false negatives during matching)
+        ///   (to prevent false negatives during matching).
         /// </summary>
         private static string GetDownloadsPath()
         {

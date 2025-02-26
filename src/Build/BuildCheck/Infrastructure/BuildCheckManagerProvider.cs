@@ -85,7 +85,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
         /// Notifies the manager that the data source will be used -
         ///   so it should register the built-in checks for the source if it hasn't been done yet.
         /// </summary>
-        /// <param name="buildCheckDataSource"></param>
+        /// <param name="buildCheckDataSource">Specifies data source (e.g. execution, event args).</param>
         public void SetDataSource(BuildCheckDataSource buildCheckDataSource)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -130,7 +130,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
         private static T Construct<T>() where T : new() => new();
 
         /// <summary>
-        /// The builtin check factory definition
+        /// The builtin check factory definition.
         /// </summary>
         /// <param name="RuleIds">The rule ids that the check is able to emit.</param>
         /// <param name="DefaultEnablement">Is it enabled by default?</param>
@@ -392,7 +392,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
         private void RemoveCheck(CheckFactoryContext checkToRemove)
         {
             var tempColl = new ConcurrentBag<CheckFactoryContext>();
-            
+
             // Take items one by one and only keep those we don't want to remove
             while (_checkRegistry.TryTake(out var item))
             {
@@ -540,6 +540,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
 
         private readonly ConcurrentDictionary<int, string> _projectsByInstanceId = new();
         private readonly ConcurrentDictionary<int, string> _projectsByEvaluationId = new();
+
         // We are receiving project imported data only from the logger events - hence always in a single threaded context
         //  (https://github.com/dotnet/msbuild/blob/main/documentation/wiki/Logging-Internals.md)
         private readonly Dictionary<int, HashSet<string>> _deferredProjectEvalIdToImportedProjects = new();
@@ -549,9 +550,9 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
         /// This is needed because the full path is needed for configuration and later for fetching configured checks
         ///  (future version might optimize by using the ProjectContextId directly for fetching the checks).
         /// </summary>
-        /// <param name="buildEventContext"></param>
-        /// <param name="projectFullPath"></param>
-        /// <returns></returns>
+        /// <param name="buildEventContext">Build event context. Used as a source for EvaluationId or ProjectInstanceId.</param>
+        /// <param name="projectFullPath">Project full path.</param>
+        /// <returns>true if project full path was detected.</returns>
         private bool TryGetProjectFullPath(BuildEventContext buildEventContext, out string projectFullPath)
         {
             if (buildEventContext.EvaluationId >= 0)
@@ -704,10 +705,7 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
 
         public void EndProjectRequest(
             ICheckContext checkContext,
-            string projectFullPath)
-        {
-            _buildEventsProcessor.ProcessProjectDone(checkContext, projectFullPath);
-        }
+            string projectFullPath) => _buildEventsProcessor.ProcessProjectDone(checkContext, projectFullPath);
 
         public void ProcessPropertyRead(PropertyReadInfo propertyReadInfo, CheckLoggingContext checkContext)
         {
@@ -742,6 +740,15 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
                 _buildEventsProcessor.ProcessPropertyWrite(propertyWriteData, checkContext);
             }
         }
+
+        public void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propReassignEventArgs)
+        {
+            _buildEventsProcessor.ProcessPropertyReassignment(
+                propReassignEventArgs.PropertyName,
+                propReassignEventArgs.NewValue,
+                ElementLocation.Create(propReassignEventArgs.File, propReassignEventArgs.LineNumber, propReassignEventArgs.ColumnNumber));
+        }
+
 
         public void Shutdown()
         { /* Too late here for any communication to the main node or for logging anything */ }

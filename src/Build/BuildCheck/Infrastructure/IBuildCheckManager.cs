@@ -61,6 +61,8 @@ internal interface IBuildCheckManager
 
     void ProcessProjectImportedEventArgs(ICheckContext checkContext, ProjectImportedEventArgs projectImportedEventArgs);
 
+    void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propertyReassignmentEventArgs);
+
     BuildCheckTracingData CreateCheckTracingStats();
 
     void FinalizeProcessing(LoggingContext loggingContext);

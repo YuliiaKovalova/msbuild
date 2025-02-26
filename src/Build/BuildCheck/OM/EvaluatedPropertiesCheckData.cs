@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections.Generic;
+using Microsoft.Build.Shared;
 
 namespace Microsoft.Build.Experimental.BuildCheck;
 
@@ -27,4 +28,10 @@ public class EvaluatedPropertiesCheckData : CheckData
     /// Gets the global properties passed to the project.
     /// </summary>
     public IReadOnlyDictionary<string, string> GlobalProperties { get; }
+
+    /// TODO: should I restrict the number of entries?
+    /// <summary>
+    /// Contains the set of evaluated properties and their locations.
+    /// </summary>
+    public IReadOnlyDictionary<string, (string, IElementLocation)> EvaluatedPropertiesLocation { get; }
 }

@@ -26,10 +26,7 @@ internal sealed class SharedOutputPathCheck : Check
         /* This is it - no custom configuration */
     }
 
-    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext)
-    {
-        registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
-    }
+    public override void RegisterActions(IBuildCheckRegistrationContext registrationContext) => registrationContext.RegisterEvaluatedPropertiesAction(EvaluatedPropertiesAction);
 
     internal override bool IsBuiltIn => true;
 
