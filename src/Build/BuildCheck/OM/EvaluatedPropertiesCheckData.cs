@@ -15,9 +15,10 @@ public class EvaluatedPropertiesCheckData : CheckData
         string projectFilePath,
         int? projectConfigurationId,
         IReadOnlyDictionary<string, string> evaluatedProperties,
-        IReadOnlyDictionary<string, string> globalProperties)
+        IReadOnlyDictionary<string, string> globalProperties,
+        IReadOnlyDictionary<string, List<(string, IMSBuildElementLocation)>> propertyToLocationMap)
         : base(projectFilePath, projectConfigurationId)
-        => (EvaluatedProperties, GlobalProperties) = (evaluatedProperties, globalProperties);
+        => (EvaluatedProperties, GlobalProperties, EvaluatedPropertyToLocationMap) = (evaluatedProperties, globalProperties, propertyToLocationMap);
 
     /// <summary>
     /// Gets the evaluated properties of the project.
@@ -33,5 +34,5 @@ public class EvaluatedPropertiesCheckData : CheckData
     /// <summary>
     /// Contains the set of evaluated properties and their locations.
     /// </summary>
-    public IReadOnlyDictionary<string, (string, IElementLocation)> EvaluatedPropertiesLocation { get; }
+    public IReadOnlyDictionary<string, List<(string, IMSBuildElementLocation)>> EvaluatedPropertyToLocationMap { get; }
 }

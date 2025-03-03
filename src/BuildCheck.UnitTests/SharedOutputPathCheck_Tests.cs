@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Build.Experimental.BuildCheck;
 using Microsoft.Build.Experimental.BuildCheck.Checks;
+using Microsoft.Build.Shared;
 using Shouldly;
 using Xunit;
 
@@ -31,7 +32,8 @@ namespace Microsoft.Build.BuildCheck.UnitTests
                 projectFile,
                 null,
                 evaluatedProperties ?? new Dictionary<string, string>(),
-                new Dictionary<string, string>());
+                new Dictionary<string, string>(),
+                new Dictionary<string, List<(string, IMSBuildElementLocation)>>());
         }
 
         [Fact]

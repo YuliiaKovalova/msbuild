@@ -741,14 +741,15 @@ internal sealed class BuildCheckManagerProvider : IBuildCheckManagerProvider
             }
         }
 
-        public void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propReassignEventArgs)
-        {
-            _buildEventsProcessor.ProcessPropertyReassignment(
-                propReassignEventArgs.PropertyName,
-                propReassignEventArgs.NewValue,
-                ElementLocation.Create(propReassignEventArgs.File, propReassignEventArgs.LineNumber, propReassignEventArgs.ColumnNumber));
-        }
+        public void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propReassignEventArgs) => _buildEventsProcessor.ProcessPropertyManipulation(
+            propReassignEventArgs.PropertyName,
+            propReassignEventArgs.NewValue,
+            ElementLocation.Create(propReassignEventArgs.File, propReassignEventArgs.LineNumber, propReassignEventArgs.ColumnNumber));
 
+        public void ProcessPropertyAssignmentEventArgs(PropertyInitialValueSetEventArgs propAssignEventArgs) => _buildEventsProcessor.ProcessPropertyManipulation(
+            propAssignEventArgs.PropertyName,
+            propAssignEventArgs.PropertyValue,
+            ElementLocation.Create(propAssignEventArgs.File, propAssignEventArgs.LineNumber, propAssignEventArgs.ColumnNumber));
 
         public void Shutdown()
         { /* Too late here for any communication to the main node or for logging anything */ }

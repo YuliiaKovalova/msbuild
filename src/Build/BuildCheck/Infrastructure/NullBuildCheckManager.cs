@@ -97,4 +97,12 @@ internal class NullBuildCheckManager : IBuildCheckManager, IBuildEngineDataRoute
     public void ProcessProjectImportedEventArgs(ICheckContext checkContext, ProjectImportedEventArgs projectImportedEventArgs)
     {
     }
+
+    public void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propertyReassignmentEventArgs)
+    {
+    }
+
+    public void ProcessPropertyAssignmentEventArgs(PropertyInitialValueSetEventArgs propertyAssignmentEventArgs)
+    {
+    }
 }

@@ -34,6 +34,7 @@ namespace Microsoft.Build.Evaluation
         private readonly HashSet<string> _overwrittenEnvironmentVariables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly EvaluationLoggingContext _evaluationLoggingContext;
         private readonly PropertyTrackingSetting _settings;
+        private readonly bool _isBuildCheckEnabled;
 
         /// <summary>
         /// Creates an instance of the PropertyTrackingEvaluatorDataWrapper class.
@@ -41,7 +42,12 @@ namespace Microsoft.Build.Evaluation
         /// <param name="dataToWrap">The underlying <see cref="IEvaluatorData{P,I,M,D}"/> to wrap for property tracking.</param>
         /// <param name="evaluationLoggingContext">The <see cref="EvaluationLoggingContext"/> used to log relevant events.</param>
         /// <param name="settingValue">Property tracking setting value</param>
-        public PropertyTrackingEvaluatorDataWrapper(IEvaluatorData<P, I, M, D> dataToWrap, EvaluationLoggingContext evaluationLoggingContext, int settingValue)
+        /// <param name="isBuildCheckEnabled">Flags identifies if build check is enabled. </param>
+        public PropertyTrackingEvaluatorDataWrapper(
+            IEvaluatorData<P, I, M, D> dataToWrap,
+            EvaluationLoggingContext evaluationLoggingContext,
+            int settingValue,
+            bool isBuildCheckEnabled)
         {
             ErrorUtilities.VerifyThrowInternalNull(dataToWrap);
             ErrorUtilities.VerifyThrowInternalNull(evaluationLoggingContext);
@@ -49,6 +55,7 @@ namespace Microsoft.Build.Evaluation
             _wrapped = dataToWrap;
             _evaluationLoggingContext = evaluationLoggingContext;
             _settings = (PropertyTrackingSetting)settingValue;
+            _isBuildCheckEnabled = isBuildCheckEnabled;
         }
 
         #region IEvaluatorData<> members with tracking-related code in them.
@@ -176,7 +183,8 @@ namespace Microsoft.Build.Evaluation
 
         private bool IsPropertyReadTrackingRequested
             => IsEnvironmentVariableReadTrackingRequested
-            || PropertyTrackingUtils.IsPropertyTrackingEnabled(_settings, PropertyTrackingSetting.UninitializedPropertyRead);
+            || PropertyTrackingUtils.IsPropertyTrackingEnabled(_settings, PropertyTrackingSetting.UninitializedPropertyRead)
+            || _isBuildCheckEnabled;
 
         private bool IsEnvironmentVariableReadTrackingRequested => PropertyTrackingUtils.IsPropertyTrackingEnabled(_settings, PropertyTrackingSetting.EnvironmentVariableRead);
 
@@ -285,7 +293,8 @@ namespace Microsoft.Build.Evaluation
         /// <param name="location">The exact location of the property. Can be null if comes not form xml.</param>
         private void TrackPropertyInitialValueSet(P property, PropertySource source, IElementLocation? location)
         {
-            if (!PropertyTrackingUtils.IsPropertyTrackingEnabled(_settings, PropertyTrackingSetting.PropertyInitialValueSet))
+            if (!PropertyTrackingUtils.IsPropertyTrackingEnabled(_settings, PropertyTrackingSetting.PropertyInitialValueSet)
+                && !_isBuildCheckEnabled)
             {
                 return;
             }

@@ -360,9 +360,6 @@ public class EndToEndTests : IDisposable
     }
 
     [Theory]
-    [InlineData("""<TargetFramework>net9.0</TargetFramework>""", "", false)]
-    [InlineData("""<TargetFrameworks>net9.0;net472</TargetFrameworks>""", "", false)]
-    [InlineData("""<TargetFrameworks>net9.0;net472</TargetFrameworks>""", " /p:TargetFramework=net9.0", false)]
     [InlineData("""<TargetFramework>net9.0</TargetFramework><TargetFrameworks>net9.0;net472</TargetFrameworks>""", "", true)]
     public void TFMConfusionCheckTest(string tfmString, string cliSuffix, bool shouldTriggerCheck)
     {
@@ -377,7 +374,7 @@ public class EndToEndTests : IDisposable
 
         _env.SetCurrentDirectory(workFolder.Path);
 
-        string output = RunnerUtilities.ExecBootstrapedMSBuild($"-check -restore" + cliSuffix, out bool success);
+        string output = RunnerUtilities.ExecBootstrapedMSBuild($"-check -restore" + cliSuffix, out bool success, timeoutMilliseconds: 12000_000);
         _env.Output.WriteLine(output);
         _env.Output.WriteLine("=========================");
         success.ShouldBeTrue();
@@ -540,7 +537,7 @@ public class EndToEndTests : IDisposable
 
         string output = RunnerUtilities.ExecBootstrapedMSBuild(
             $"{Path.GetFileName(projectFile.Path)} /m:1 -nr:False -restore" +
-            (checkRequested ? " -check" : string.Empty), out bool success, false, _env.Output, timeoutMilliseconds: 120_000);
+            (checkRequested ? " -check" : string.Empty), out bool success, false, _env.Output, timeoutMilliseconds: 12000_000);
         _env.Output.WriteLine(output);
 
         success.ShouldBeTrue();

@@ -43,6 +43,8 @@ internal class BuildCheckForwardingLogger : IForwardingLogger
         typeof(TaskFinishedEventArgs),
         typeof(TaskParameterEventArgs),
         typeof(ProjectImportedEventArgs),
+        typeof(PropertyReassignmentEventArgs),
+        typeof(PropertyInitialValueSetEventArgs),
     ];
 
     public void Initialize(IEventSource eventSource, int nodeCount) => Initialize(eventSource);

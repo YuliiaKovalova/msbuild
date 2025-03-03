@@ -75,10 +75,9 @@ internal class BuildEventsProcessor(BuildCheckCentralContext buildCheckCentralCo
                 new(evaluationFinishedEventArgs.ProjectFile!,
                     evaluationFinishedEventArgs.BuildEventContext?.ProjectInstanceId,
                     propertiesLookup!,
-                    globalPropertiesLookup);
+                    globalPropertiesLookup,
+                    _propertyManipulations);
 
-
-            HERE
             _buildCheckCentralContext.RunEvaluatedPropertiesActions(checkData, checkContext, ReportResult);
         }
 
@@ -101,10 +100,18 @@ internal class BuildEventsProcessor(BuildCheckCentralContext buildCheckCentralCo
         _buildCheckCentralContext.RunEvaluatedItemsActions(new EvaluatedItemsCheckData(evaluationFinishedEventArgs), checkContext, ReportResult);
     }
 
-    internal Dictionary<string, (string, IElementLocation)> _propertyReassignments = new();
+    internal Dictionary<string, List<(string, IMSBuildElementLocation)>> _propertyManipulations = [];
 
-    internal void ProcessPropertyReassignment(string propertyName, string propertyValue, IElementLocation location) => _propertyReassignments[propertyName] = (propertyValue, location);
+    internal void ProcessPropertyManipulation(string propertyName, string propertyValue, IMSBuildElementLocation location)
+    {
+        if (!_propertyManipulations.TryGetValue(propertyName, out var list))
+        {
+            list = new List<(string, IMSBuildElementLocation)>();
+            _propertyManipulations[propertyName] = list;
+        }
 
+        list.Add((propertyValue, location));
+    }
 
     /// <summary>
     /// The method collects events associated with the used environment variables in projects.

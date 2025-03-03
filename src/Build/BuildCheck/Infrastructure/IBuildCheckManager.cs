@@ -63,6 +63,8 @@ internal interface IBuildCheckManager
 
     void ProcessPropertyReassignmentEventArgs(PropertyReassignmentEventArgs propertyReassignmentEventArgs);
 
+    void ProcessPropertyAssignmentEventArgs(PropertyInitialValueSetEventArgs propertyAssignmentEventArgs);
+
     BuildCheckTracingData CreateCheckTracingStats();
 
     void FinalizeProcessing(LoggingContext loggingContext);

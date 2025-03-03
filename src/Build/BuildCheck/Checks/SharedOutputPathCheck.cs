@@ -6,6 +6,7 @@ using System.IO;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Shared;
 using Microsoft.Build.Collections;
+using System.Linq;
 
 namespace Microsoft.Build.Experimental.BuildCheck.Checks;
 
@@ -47,19 +48,28 @@ internal sealed class SharedOutputPathCheck : Check
         context.Data.EvaluatedProperties.TryGetValue("OutputPath", out binPath);
         context.Data.EvaluatedProperties.TryGetValue("IntermediateOutputPath", out objPath);
 
-        string? absoluteBinPath = CheckAndAddFullOutputPath(binPath, context);
+        List<(string value, IMSBuildElementLocation location)>? propValueToLocation;
+        context.Data.EvaluatedPropertyToLocationMap.TryGetValue("OutputPath", out propValueToLocation);
+
+        string? absoluteBinPath = CheckAndAddFullOutputPath(binPath, context, propValueToLocation);
         // Check objPath only if it is different from binPath
         if (
-            !string.IsNullOrEmpty(objPath) && !string.IsNullOrEmpty(absoluteBinPath) &&
-            !MSBuildNameIgnoreCaseComparer.Default.Equals(objPath, binPath)
+            !string.IsNullOrEmpty(objPath)
+            && !string.IsNullOrEmpty(absoluteBinPath)
+            && !MSBuildNameIgnoreCaseComparer.Default.Equals(objPath, binPath)
             && !MSBuildNameIgnoreCaseComparer.Default.Equals(objPath, absoluteBinPath)
         )
         {
-            CheckAndAddFullOutputPath(objPath, context);
+            List<(string value, IMSBuildElementLocation location)>? intermediatePropValueToLocation;
+            context.Data.EvaluatedPropertyToLocationMap.TryGetValue("IntermediateOutputPath", out intermediatePropValueToLocation);
+            CheckAndAddFullOutputPath(objPath, context, intermediatePropValueToLocation);
         }
     }
 
-    private string? CheckAndAddFullOutputPath(string? path, BuildCheckDataContext<EvaluatedPropertiesCheckData> context)
+    private string? CheckAndAddFullOutputPath(
+        string? path,
+        BuildCheckDataContext<EvaluatedPropertiesCheckData> context,
+        List<(string value, IMSBuildElementLocation location)>? propValueToLocation)
     {
         if (string.IsNullOrEmpty(path))
         {
@@ -67,14 +77,18 @@ internal sealed class SharedOutputPathCheck : Check
         }
 
         string projectPath = context.Data.ProjectFilePath;
+        string rawPath = path!;
         path = BuildCheckUtilities.RootEvaluatedPath(path!, projectPath);
 
         if (_projectsPerOutputPath.TryGetValue(path!, out string? conflictingProject))
         {
+            IMSBuildElementLocation? location = propValueToLocation?.Where(pl => pl.value.Contains(rawPath))
+                .LastOrDefault()
+                .location;
+
             context.ReportResult(BuildCheckResult.CreateBuiltIn(
                 SupportedRule,
-                // Populating precise location tracked via https://github.com/dotnet/msbuild/issues/10383
-                ElementLocation.EmptyLocation,
+                ElementLocation.Create(location!.File, location.Line, location.Column),
                 Path.GetFileName(projectPath),
                 Path.GetFileName(conflictingProject),
                 path!));
