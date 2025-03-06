@@ -249,6 +249,8 @@ namespace Microsoft.Build.BackEnd
 
     internal static class PacketTypeExtensions
     {
+        public const byte PacketVersion = 1;
+
         private const byte ExtendedHeaderFlag = 0x40; // Bit 6 indicates extended header with version
 
         /// <summary>
@@ -271,18 +273,5 @@ namespace Microsoft.Build.BackEnd
 
         // Write extended header with version
         public static void WriteVersion(Stream stream, byte version) => stream.WriteByte(version);
-    }
-
-    internal static class PacketVersionManager
-    {
-        private static readonly Dictionary<NodePacketType, byte> _currentPacketVersions = new Dictionary<NodePacketType, byte>
-        {
-            { NodePacketType.TaskHostConfiguration, 1 },
-        };
-
-        // Get current version for a packet type
-        public static byte GetCurrentVersion(NodePacketType type) => _currentPacketVersions.TryGetValue(type, out byte version) ? version : (byte)1;
-
-        public static bool SupportsVersioning(NodePacketType type) => _currentPacketVersions.ContainsKey(type);
     }
 }

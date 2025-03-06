@@ -753,25 +753,19 @@ namespace Microsoft.Build.BackEnd
                             // clear the buffer but keep the underlying capacity to avoid reallocations
                             writeStream.SetLength(0);
 
-                            ITranslator writeTranslator = BinaryTranslator.GetWriteTranslator(writeStream);
+                            NodePacketType packetType = packet.Type;
+                            ITranslator writeTranslator = BinaryTranslator.GetWriteTranslator(writeStream, PacketTypeExtensions.PacketVersion);
                             try
                             {
-                                NodePacketType packetType = packet.Type;
-                                bool supportsVersioning = PacketVersionManager.SupportsVersioning(packetType);
-
-                                // Write packet type with extended header flag if versioned
-                                byte rawPackageType = supportsVersioning ? PacketTypeExtensions.CreateExtendedHeaderType(packetType) : (byte)packetType;
+                                // Write packet type with extended header.
+                                byte rawPackageType = PacketTypeExtensions.CreateExtendedHeaderType(packetType);
                                 writeStream.WriteByte(rawPackageType);
 
                                 // Pad for the packet length
                                 WriteInt32(writeStream, 0);
 
-                                // If versioned, write extended header with version
-                                if (supportsVersioning)
-                                {
-                                    byte currentVersion = PacketVersionManager.GetCurrentVersion(packetType);
-                                    PacketTypeExtensions.WriteVersion(writeStream, currentVersion);
-                                }
+                                // Write extended header with version
+                                PacketTypeExtensions.WriteVersion(writeStream, PacketTypeExtensions.PacketVersion);
 
                                 packet.Translate(writeTranslator);
 

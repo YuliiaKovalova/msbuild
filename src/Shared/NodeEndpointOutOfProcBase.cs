@@ -601,7 +601,7 @@ namespace Microsoft.Build.BackEnd
                             bool hasExtendedHeader = PacketTypeExtensions.HasExtendedHeader(rawType);
                             NodePacketType packetType = PacketTypeExtensions.HasExtendedHeader(rawType) ? PacketTypeExtensions.GetNodePacketType(rawType) : (NodePacketType)rawType;
 
-                            byte version;
+                            byte version = 0;
                             if (hasExtendedHeader)
                             {
                                 version = PacketTypeExtensions.ReadVersion(localReadPipe);
@@ -609,7 +609,7 @@ namespace Microsoft.Build.BackEnd
 
                             try
                             {
-                                _packetFactory.DeserializeAndRoutePacket(0, packetType, BinaryTranslator.GetReadTranslator(localReadPipe, _sharedReadBuffer));
+                                _packetFactory.DeserializeAndRoutePacket(0, packetType, BinaryTranslator.GetReadTranslator(localReadPipe, _sharedReadBuffer, version));
                             }
                             catch (Exception e)
                             {
