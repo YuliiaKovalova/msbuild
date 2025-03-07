@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 #if CLR2COMPATIBILITY
 using Microsoft.Build.Shared.Concurrent;
@@ -114,6 +115,8 @@ namespace Microsoft.Build.BackEnd
         /// A binary writer to help write into <see cref="_packetStream"/>
         /// </summary>
         private BinaryWriter _binaryWriter;
+
+        private readonly IList<string> _versionHandshakeGroup = ["fileVersionMajor", "fileVersionMinor", "fileVersionBuild", "fileVersionPrivate"];
 
         #endregion
 
@@ -393,7 +396,7 @@ namespace Microsoft.Build.BackEnd
                     Handshake handshake = GetHandshake();
                     try
                     {
-                        int[] handshakeComponents = handshake.RetrieveHandshakeComponents();
+                        KeyValuePair<string, int>[] handshakeComponents = handshake.RetrieveHandshakeComponents();
                         for (int i = 0; i < handshakeComponents.Length; i++)
                         {
 #pragma warning disable SA1111, SA1009 // Closing parenthesis should be on line of last parameter
@@ -405,12 +408,21 @@ namespace Microsoft.Build.BackEnd
                             );
 #pragma warning restore SA1111, SA1009 // Closing parenthesis should be on line of last parameter
 
-                            if (handshakePart != handshakeComponents[i])
+                            if (handshakePart != handshakeComponents[i].Value)
                             {
-                                CommunicationsUtilities.Trace("Handshake failed. Received {0} from host not {1}. Probably the host is a different MSBuild build.", handshakePart, handshakeComponents[i]);
-                                _pipeServer.WriteIntForHandshake(i + 1);
-                                gotValidConnection = false;
-                                break;
+                                // NET Task host allows to connect to MSBuild.dll with the different handshake version.
+                                // We agreed to hardcode a value of 99 to bypass the protection for this scenario.
+                                if (_versionHandshakeGroup.Contains(handshakeComponents[i].Key) && handshakeComponents[i].Value == Handshake.NetTaskHostHandshakeVersion)
+                                {
+                                    CommunicationsUtilities.Trace("Handshake for NET Host. Child host {0} for {1}.", handshakePart, handshakeComponents[i].Key);
+                                }
+                                else
+                                {
+                                    CommunicationsUtilities.Trace("Handshake failed. Received {0} from host not {1}. Probably the host is a different MSBuild build.", handshakePart, handshakeComponents[i]);
+                                    _pipeServer.WriteIntForHandshake(i + 1);
+                                    gotValidConnection = false;
+                                    break;
+                                } 
                             }
                         }
 
