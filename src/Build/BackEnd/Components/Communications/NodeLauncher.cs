@@ -146,13 +146,15 @@ namespace Microsoft.Build.BackEnd
                 BackendNativeMethods.SECURITY_ATTRIBUTES threadSecurityAttributes = new();
                 processSecurityAttributes.nLength = Marshal.SizeOf<BackendNativeMethods.SECURITY_ATTRIBUTES>();
                 threadSecurityAttributes.nLength = Marshal.SizeOf<BackendNativeMethods.SECURITY_ATTRIBUTES>();
+                processSecurityAttributes.bInheritHandle = 1;
+                threadSecurityAttributes.bInheritHandle = 1;
 
                 bool result = BackendNativeMethods.CreateProcess(
                         exeName,
                         commandLineArgs,
                         ref processSecurityAttributes,
                         ref threadSecurityAttributes,
-                        false,
+                        bInheritHandles: true, // inherits parent process privileges
                         creationFlags,
                         BackendNativeMethods.NullPtr,
                         null,

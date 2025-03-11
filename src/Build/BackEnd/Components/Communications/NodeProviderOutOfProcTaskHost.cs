@@ -582,7 +582,7 @@ namespace Microsoft.Build.BackEnd
             if (msbuildAssemblyLocation != null)
             {
                 // For dotnet.exe, the dll path must come first, then -- to separate application arguments
-                commandLineArgs = $"\"{msbuildAssemblyLocation}\" -- /nodemode:2 ";
+                commandLineArgs = $"\"{msbuildAssemblyLocation}\" -- /nodemode:2 /nodereuse:{ComponentHost.BuildParameters.EnableNodeReuse} /low:{ComponentHost.BuildParameters.LowPriority}";
             }
             else
             {
