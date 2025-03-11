@@ -588,7 +588,7 @@ namespace Microsoft.Build.BackEnd
             {
                 // Start the new process.  We pass in a node mode with a node number of 2, to indicate that we
                 // want to start up an MSBuild task host node.
-                commandLineArgs = $"/nologo /nodemode:2 /nodereuse:{ComponentHost.BuildParameters.EnableNodeReuse} /low:{ComponentHost.BuildParameters.LowPriority}";
+                commandLineArgs = $"/nologo /nodemode:2";
             }
 
             CommunicationsUtilities.Trace("For a host context of {0}, spawning executable from {1}.", hostContext.ToString(), msbuildExecutable ?? Constants.MSBuildExecutableName);
