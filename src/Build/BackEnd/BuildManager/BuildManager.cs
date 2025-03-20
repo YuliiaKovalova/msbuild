@@ -619,6 +619,8 @@ namespace Microsoft.Build.Execution
                     _threadException.Throw();
                 }
 
+                CommunicationsUtilities.Trace($"Scheduling action...");
+
                 if (_workQueue == null)
                 {
                     _workQueue = new ActionBlock<Action>(action => ProcessWorkQueue(action));
@@ -1829,6 +1831,7 @@ namespace Microsoft.Build.Execution
         /// </summary>
         private void IssueBuildRequestForBuildSubmission(BuildSubmission submission, BuildRequestConfiguration configuration, bool allowMainThreadBuild = false)
         {
+            CommunicationsUtilities.Trace($"IssueBuildRequestForBuildSubmission for SubmissionId {submission.SubmissionId}");
             _workQueue!.Post(
                 () =>
                 {
@@ -1848,6 +1851,7 @@ namespace Microsoft.Build.Execution
 
             void IssueBuildSubmissionToSchedulerImpl(BuildSubmission submission, bool allowMainThreadBuild)
             {
+                CommunicationsUtilities.Trace($"IssueBuildSubmissionToSchedulerImpl for SubmissionId {submission.SubmissionId}");
                 var resetMainThreadOnFailure = false;
                 try
                 {
@@ -2370,6 +2374,7 @@ namespace Microsoft.Build.Execution
             {
                 foreach (BuildRequest request in blocker.BuildRequests)
                 {
+                    CommunicationsUtilities.Trace($"IN HandleNewRequest SubmissionID {request.SubmissionId}.");
                     BuildRequestConfiguration config = _configCache![request.ConfigurationId];
                     if (FileUtilities.IsSolutionFilename(config.ProjectFullPath))
                     {
@@ -2643,6 +2648,7 @@ namespace Microsoft.Build.Execution
         /// </summary>
         private void PerformSchedulingActions(IEnumerable<ScheduleResponse> responses)
         {
+            CommunicationsUtilities.Trace($"IN PerformSchedulingActions");
             Debug.Assert(Monitor.IsEntered(_syncLock));
 
             foreach (ScheduleResponse response in responses)
@@ -2725,6 +2731,7 @@ namespace Microsoft.Build.Execution
                 if (_buildSubmissions.TryGetValue(result.SubmissionId, out BuildSubmissionBase? submissionBase) &&
                     submissionBase is BuildSubmissionBase<TRequestData, TResultData> submission)
                 {
+                    CommunicationsUtilities.Trace($"In ReportResultsToSubmission for SubmissionID {submissionBase.SubmissionId}");
                     /* If the request failed because we caught an exception from the loggers, we can assume we will receive no more logging messages for
                      * this submission, therefore set the logging as complete. InternalLoggerExceptions are unhandled exceptions from the logger. If the logger author does
                      * not handle an exception the eventsource wraps all exceptions (except a logging exception) into an internal logging exception.
@@ -2741,6 +2748,7 @@ namespace Microsoft.Build.Execution
                     }
 
                     submission.CompleteResults(result);
+                    CommunicationsUtilities.Trace($"In submission.CompleteResults for SubmissionId {submissionBase.SubmissionId}");
                     CheckSubmissionCompletenessAndRemove(submission);
                 }
             }

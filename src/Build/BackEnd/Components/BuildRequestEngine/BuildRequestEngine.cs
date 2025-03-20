@@ -272,7 +272,7 @@ namespace Microsoft.Build.BackEnd
                     foreach (BuildRequestEntry entry in requestsToShutdown)
                     {
                         BuildResult result = entry.Result ?? new BuildResult(entry.Request, new BuildAbortedException());
-                        TraceEngine("CFB: Request is now {0}({1}) (nr {2}) has been deactivated.", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId);
+                        TraceEngine("CFB: Request is now {0}({1}) (nr {2}) has been deactivated. SubmissionId {3}", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, entry.Request.SubmissionId);
                         RaiseRequestComplete(entry.Request, result);
                     }
 
@@ -332,7 +332,7 @@ namespace Microsoft.Build.BackEnd
                 () =>
                 {
                     ErrorUtilities.VerifyThrow(_status != BuildRequestEngineStatus.Shutdown && _status != BuildRequestEngineStatus.Uninitialized, "Engine loop not yet started, status is {0}.", _status);
-                    TraceEngine("Request {0}({1}) (nr {2}) received and activated.", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId);
+                    TraceEngine("Request {0}({1}) (nr {2}) received and activated. SubmissionId {3}", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.SubmissionId);
 
                     ErrorUtilities.VerifyThrow(!_requestsByGlobalRequestId.ContainsKey(request.GlobalRequestId), "Request {0} is already known to the engine.", request.GlobalRequestId);
                     ErrorUtilities.VerifyThrow(_configCache.HasConfiguration(request.ConfigurationId), "Request {0} refers to configuration {1} which is not known to the engine.", request.GlobalRequestId, request.ConfigurationId);
@@ -356,7 +356,7 @@ namespace Microsoft.Build.BackEnd
                             resultToReport.ProjectStateAfterBuild = config.Project;
                         }
 
-                        TraceEngine("Request {0}({1}) (nr {2}) retrieved results for configuration {3} from node {4} for transfer.", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.ConfigurationId, _componentHost.BuildParameters.NodeId);
+                        TraceEngine("Request {0}({1}) (nr {2}) retrieved results for configuration {3} from node {4} for transfer. SubmissionId {5}", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.ConfigurationId, _componentHost.BuildParameters.NodeId, request.SubmissionId);
 
                         // If this is the inproc node, we've already set the configuration's ResultsNodeId to the correct value in
                         // HandleRequestBlockedOnResultsTransfer, and don't want to set it again, because we actually have less
@@ -409,7 +409,7 @@ namespace Microsoft.Build.BackEnd
                     if (unblocker.Result == null)
                     {
                         // We are resuming execution.
-                        TraceEngine("Request {0}({1}) (nr {2}) is now proceeding from current state {3}.", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, entry.State);
+                        TraceEngine("Request {0}({1}) (nr {2}) is now proceeding from current state {3}. SubmissionId {4}", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, entry.State, entry.Request.SubmissionId);
 
                         // UNDONE: (Refactor) This is a bit icky because we still have the concept of blocking on an in-progress request
                         // versus blocking on requests waiting for results.  They come to the same thing, and its been rationalized correctly in
@@ -430,7 +430,7 @@ namespace Microsoft.Build.BackEnd
 
                         if (result.NodeRequestId == BuildRequest.ResultsTransferNodeRequestId)
                         {
-                            TraceEngine("Request {0}({1}) (nr {2}) has retrieved the results for configuration {3} and cached them on node {4} (UBR).", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, entry.Request.ConfigurationId, _componentHost.BuildParameters.NodeId);
+                            TraceEngine("Request {0}({1}) (nr {2}) has retrieved the results for configuration {3} and cached them on node {4} (UBR). SubmissionID {5}", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, entry.Request.ConfigurationId, _componentHost.BuildParameters.NodeId, entry.Request.SubmissionId);
 
                             IResultsCache resultsCache = (IResultsCache)_componentHost.GetComponent(BuildComponentType.ResultsCache);
                             IConfigCache configCache = (IConfigCache)_componentHost.GetComponent(BuildComponentType.ConfigCache);
@@ -454,7 +454,7 @@ namespace Microsoft.Build.BackEnd
                         }
                         else
                         {
-                            TraceEngine("Request {0}({1}) (nr {2}) is no longer waiting on nr {3} (UBR).  Results are {4}.", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, result.NodeRequestId, result.OverallResult);
+                            TraceEngine("Request {0}({1}) (nr {2}) is no longer waiting on nr {3} (UBR).  Results are {4}. SubmissionId {5}", entry.Request.GlobalRequestId, entry.Request.ConfigurationId, entry.Request.NodeRequestId, result.NodeRequestId, result.OverallResult, entry.Request.SubmissionId);
 
                             // Update the configuration with targets information, if we received any and didn't already have it.
                             if (result.DefaultTargets != null)
@@ -554,10 +554,11 @@ namespace Microsoft.Build.BackEnd
                                         currentEntry.ReportResult(cacheResponse.Results);
 
                                         TraceEngine(
-                                            "Request {0} (node request {1}) with targets ({2}) satisfied from cache",
+                                            "Request {0} (node request {1}) with targets ({2}) satisfied from cache. SubmissionId {3}",
                                             request.GlobalRequestId,
                                             request.NodeRequestId,
-                                            string.Join(";", request.Targets));
+                                            string.Join(";", request.Targets),
+                                            request.SubmissionId);
                                     }
                                     else
                                     {
@@ -652,7 +653,7 @@ namespace Microsoft.Build.BackEnd
             RequestCompleteDelegate requestComplete = OnRequestComplete;
             if (requestComplete != null)
             {
-                TraceEngine("RRC: Reporting result for request {0}({1}) (nr {2}).", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId);
+                TraceEngine("RRC: Reporting result for request {0}({1}) (nr {2}). SubmissionID {3}", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.SubmissionId);
                 requestComplete(request, result);
             }
         }
@@ -737,13 +738,13 @@ namespace Microsoft.Build.BackEnd
                     case BuildRequestEntryState.Active:
                         ErrorUtilities.VerifyThrow(activeEntry == null, "Multiple active requests");
                         activeEntry = currentEntry;
-                        TraceEngine("ERS: Active request is now {0}({1}) (nr {2}).", currentEntry.Request.GlobalRequestId, currentEntry.Request.ConfigurationId, currentEntry.Request.NodeRequestId);
+                        TraceEngine("ERS: Active request is now {0}({1}) (nr {2}) SubmissionID {3}.", currentEntry.Request.GlobalRequestId, currentEntry.Request.ConfigurationId, currentEntry.Request.NodeRequestId, currentEntry.Request.SubmissionId);
                         break;
 
                     // This request is now complete.
                     case BuildRequestEntryState.Complete:
                         completedEntries.Add(currentEntry);
-                        TraceEngine("ERS: Request {0}({1}) (nr {2}) is marked as complete.", currentEntry.Request.GlobalRequestId, currentEntry.Request.ConfigurationId, currentEntry.Request.NodeRequestId);
+                        TraceEngine("ERS: Request {0}({1}) (nr {2}) SubmissionID {3} is marked as complete.", currentEntry.Request.GlobalRequestId, currentEntry.Request.ConfigurationId, currentEntry.Request.NodeRequestId, currentEntry.Request.SubmissionId);
                         break;
 
                     // This request is waiting for configurations or results
@@ -762,6 +763,7 @@ namespace Microsoft.Build.BackEnd
 
                     default:
                         ErrorUtilities.ThrowInternalError("Unexpected BuildRequestEntry state " + currentEntry.State);
+                        TraceEngine("Unexpected BuildRequestEntry state " + currentEntry.State);
                         break;
                 }
             }
@@ -769,7 +771,7 @@ namespace Microsoft.Build.BackEnd
             // Remove completed requests
             foreach (BuildRequestEntry completedEntry in completedEntries)
             {
-                TraceEngine("ERS: Request {0}({1}) (nr {2}) is being removed from the requests list.", completedEntry.Request.GlobalRequestId, completedEntry.Request.ConfigurationId, completedEntry.Request.NodeRequestId);
+                TraceEngine("ERS: Request {0}({1}) (nr {2}) is being removed from the requests list. SubmissionID {3}", completedEntry.Request.GlobalRequestId, completedEntry.Request.ConfigurationId, completedEntry.Request.NodeRequestId, completedEntry.Request.SubmissionId);
                 _requests.Remove(completedEntry);
                 _requestsByGlobalRequestId.Remove(completedEntry.Request.GlobalRequestId);
             }
@@ -823,7 +825,7 @@ namespace Microsoft.Build.BackEnd
                     completedEntry.Result.ProjectTargets = configuration.ProjectTargets;
                 }
 
-                TraceEngine("ERS: Request is now {0}({1}) (nr {2}) has had its builder cleaned up.", completedEntry.Request.GlobalRequestId, completedEntry.Request.ConfigurationId, completedEntry.Request.NodeRequestId);
+                TraceEngine("ERS: Request is now {0}({1}) (nr {2}) SubmissionID {3} has had its builder cleaned up.", completedEntry.Request.GlobalRequestId, completedEntry.Request.ConfigurationId, completedEntry.Request.NodeRequestId, completedEntry.Request.SubmissionId);
                 RaiseRequestComplete(completedEntry.Request, completedEntry.Result);
             }
         }
@@ -1189,11 +1191,12 @@ namespace Microsoft.Build.BackEnd
                         {
                             // Issue the config resolution request
                             TraceEngine(
-                                "Request {0}({1}) (nr {2}) is waiting on configuration {3} (IBR)",
+                                "Request {0}({1}) (nr {2}) is waiting on configuration {3} (IBR) SubmissionID {4}",
                                 issuingEntry.Request.GlobalRequestId,
                                 issuingEntry.Request.ConfigurationId,
                                 issuingEntry.Request.NodeRequestId,
-                                request.Config.ConfigurationId);
+                                request.Config.ConfigurationId,
+                                issuingEntry.Request.SubmissionId);
                             issuingEntry.WaitForConfiguration(request.Config);
                         }
                     }
@@ -1229,10 +1232,11 @@ namespace Microsoft.Build.BackEnd
                             _nodeLoggingContext.LogRequestHandledFromCache(newRequest, _configCache[newRequest.ConfigurationId], response.Results);
 
                             TraceEngine(
-                                "Request {0} (node request {1}) with targets ({2}) satisfied from cache",
+                                "Request {0} (node request {1}) with targets ({2}) satisfied from cache SubmissionID {3}",
                                 newRequest.GlobalRequestId,
                                 newRequest.NodeRequestId,
-                                string.Join(",", request.Targets));
+                                string.Join(",", request.Targets),
+                                newRequest.SubmissionId);
 
                             // Can't report the result directly here, because that could cause the request to go from
                             // Waiting to Ready.
@@ -1357,7 +1361,7 @@ namespace Microsoft.Build.BackEnd
             {
                 foreach (BuildRequest blockingRequest in blocker.BuildRequests)
                 {
-                    TraceEngine("Sending node request {0} (configuration {1}) with parent {2} to Build Manager", blockingRequest.NodeRequestId, blockingRequest.ConfigurationId, blocker.BlockedRequestId);
+                    TraceEngine("Sending node request {0} (configuration {1}) with parent {2} to Build Manager. SubmissionId {3}", blockingRequest.NodeRequestId, blockingRequest.ConfigurationId, blocker.BlockedRequestId, blockingRequest.SubmissionId);
                 }
             }
 

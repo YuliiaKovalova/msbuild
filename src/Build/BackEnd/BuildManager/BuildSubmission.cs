@@ -5,6 +5,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 using Microsoft.Build.BackEnd;
+using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
 
 namespace Microsoft.Build.Execution
@@ -13,7 +14,7 @@ namespace Microsoft.Build.Execution
     /// A callback used to receive notification that a build has completed.
     /// </summary>
     /// <remarks>
-    /// When this delegate is invoked, the WaitHandle on the BuildSubmission will have been be signalled and the OverallBuildResult will be valid.
+    /// When this delegate is invoked, the WaitHandle on the BuildSubmission will have been be signaled and the OverallBuildResult will be valid.
     /// </remarks>
     internal delegate void BuildSubmissionCompleteCallbackInternal<TRequestData, TResultData>(
         BuildSubmissionBase<TRequestData, TResultData> submission)
@@ -104,6 +105,7 @@ namespace Microsoft.Build.Execution
         /// </summary>
         protected internal override void CheckForCompletion()
         {
+            CommunicationsUtilities.Trace($"In CheckForCompletion for SubmissionId {SubmissionId}");
             if (BuildResult != null && LoggingCompleted)
             {
                 bool hasCompleted = (Interlocked.Exchange(ref CompletionInvoked, 1) == 1);
@@ -118,6 +120,7 @@ namespace Microsoft.Build.Execution
                         void Callback(object? state)
                         {
                             _completionCallback(this);
+                            CommunicationsUtilities.Trace($"In CheckForCompletion for SubmissionId {SubmissionId} after Callback");
                         }
 
                         ThreadPoolExtensions.QueueThreadPoolWorkItemWithCulture(Callback, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
@@ -234,6 +237,7 @@ namespace Microsoft.Build.Execution
 
         protected internal override void OnCompletition()
         {
+            CommunicationsUtilities.Trace($"In OnCompletion for submission {SubmissionId}");
             // Did this submission have warnings elevated to errors? If so, mark it as
             // failed even though it succeeded (with warnings--but they're errors).
             if (BuildResult != null &&
