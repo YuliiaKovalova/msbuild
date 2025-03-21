@@ -14,6 +14,7 @@ using Microsoft.Build.BackEnd.Components.Caching;
 using Microsoft.Build.BackEnd.Logging;
 using Microsoft.Build.BackEnd.SdkResolution;
 using Microsoft.Build.Evaluation;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.FileAccesses;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Internal;
@@ -376,6 +377,7 @@ namespace Microsoft.Build.Execution
             if (_nodeEndpoint.LinkStatus == LinkStatus.Active)
             {
                 _nodeEndpoint.SendData(result);
+                MSBuildEventSource.Log.BuildSubmissionFlow(request.GlobalRequestId.ToString(), request.SubmissionId.ToString(), _buildParameters.NodeId.ToString(), request.Targets.ToString(), "OutOfProcNode.OnRequestComplete");
             }
 
 #if FEATURE_REPORTFILEACCESSES

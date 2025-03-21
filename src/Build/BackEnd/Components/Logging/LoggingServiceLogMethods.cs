@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Build.BackEnd.Shared;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Experimental.BuildCheck;
 using Microsoft.Build.Experimental.BuildCheck.Infrastructure;
 using Microsoft.Build.Framework;
@@ -516,6 +517,7 @@ namespace Microsoft.Build.BackEnd.Logging
 
         public void LogProjectStarted(ProjectStartedEventArgs buildEvent)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(buildEvent.BuildEventContext.SubmissionId.ToString(), "", "LoggingService.LogProjectStarted");
             ProcessLoggingEvent(buildEvent);
         }
 

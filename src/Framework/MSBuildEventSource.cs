@@ -672,6 +672,30 @@ namespace Microsoft.Build.Eventing
         {
             WriteEvent(92, pluginTypeName, projectPath, targets);
         }
+
+        [Event(93, Keywords = Keywords.All)]
+        public void BuildSubmissionFlowStart(string submissionId, string projectPath, string targets)
+        {
+            WriteEvent(93, submissionId, projectPath, targets);
+        }
+
+        [Event(94, Keywords = Keywords.All)]
+        public void BuildSubmissionFlow(string globalRequestId, string submissionId, string nodeId, string targets, string currentStage)
+        {
+            WriteEvent(94, globalRequestId, submissionId, nodeId, targets, currentStage);
+        }
+
+        [Event(95, Keywords = Keywords.All)]
+        public void BuildSubmissionFlow(string submissionId, string targets, string currentStage)
+        {
+            WriteEvent(95, submissionId, targets, currentStage);
+        }
+
+        [Event(96, Keywords = Keywords.All)]
+        public void BuildSubmissionFlowStop(string submissionId, string projectPath, string targets)
+        {
+            WriteEvent(96, submissionId, projectPath, targets);
+        }
         #endregion
     }
 }

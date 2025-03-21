@@ -307,15 +307,15 @@ namespace Microsoft.Build.BackEnd
 
             // Get the parent, if any
             SchedulableRequest parentRequest = null;
-            if (blocker.BlockedRequestId != BuildRequest.InvalidGlobalRequestId)
+            if (blocker.BlockedGlobalRequestId != BuildRequest.InvalidGlobalRequestId)
             {
                 if (blocker.YieldAction == YieldAction.Reacquire)
                 {
-                    parentRequest = _schedulingData.GetYieldingRequest(blocker.BlockedRequestId);
+                    parentRequest = _schedulingData.GetYieldingRequest(blocker.BlockedGlobalRequestId);
                 }
                 else
                 {
-                    parentRequest = _schedulingData.GetExecutingRequest(blocker.BlockedRequestId);
+                    parentRequest = _schedulingData.GetExecutingRequest(blocker.BlockedGlobalRequestId);
                 }
             }
 
@@ -325,11 +325,11 @@ namespace Microsoft.Build.BackEnd
                 // building a target we want to build.
                 if (blocker.YieldAction != YieldAction.None)
                 {
-                    TraceScheduler("Request {0} on node {1} is performing yield action {2}.", blocker.BlockedRequestId, nodeId, blocker.YieldAction);
+                    TraceScheduler("Request {0} on node {1} is performing yield action {2}.", blocker.BlockedGlobalRequestId, nodeId, blocker.YieldAction);
                     ErrorUtilities.VerifyThrow(string.IsNullOrEmpty(blocker.BlockingTarget), "Blocking target should be null because this is not a request blocking on a target");
                     HandleYieldAction(parentRequest, blocker);
                 }
-                else if ((blocker.BlockingRequestId == blocker.BlockedRequestId) && blocker.BlockingRequestId != BuildRequest.InvalidGlobalRequestId)
+                else if ((blocker.BlockingRequestId == blocker.BlockedGlobalRequestId) && blocker.BlockingRequestId != BuildRequest.InvalidGlobalRequestId)
                 {
                     ErrorUtilities.VerifyThrow(string.IsNullOrEmpty(blocker.BlockingTarget), "Blocking target should be null because this is not a request blocking on a target");
                     // We are blocked waiting for a transfer of results.

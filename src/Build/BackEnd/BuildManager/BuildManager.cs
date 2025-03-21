@@ -38,6 +38,7 @@ using Microsoft.Build.Shared;
 using Microsoft.Build.Shared.Debugging;
 using Microsoft.Build.TelemetryInfra;
 using Microsoft.NET.StringTools;
+using static Microsoft.Build.Shared.FileMatcher;
 using ExceptionHandling = Microsoft.Build.Shared.ExceptionHandling;
 using ForwardingLoggerRecord = Microsoft.Build.Logging.ForwardingLoggerRecord;
 using LoggerDescription = Microsoft.Build.Logging.LoggerDescription;
@@ -1903,6 +1904,7 @@ namespace Microsoft.Build.Execution
 
                     lock (_syncLock)
                     {
+                        MSBuildEventSource.Log.BuildSubmissionFlow(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), "BuildManager.IssueBuildSubmissionToSchedulerImpl");
                         submission.CompleteLogging();
                         ReportResultsToSubmission<BuildRequestData, BuildResult>(new BuildResult(submission.BuildRequest!, ex));
                         _overallBuildSuccess = false;
@@ -2348,6 +2350,7 @@ namespace Microsoft.Build.Execution
                             }
 
                             _resultsCache!.AddResult(result);
+                            MSBuildEventSource.Log.BuildSubmissionFlow(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), "BuildManager.HandleCacheResult");
                             submission.CompleteLogging();
                             ReportResultsToSubmission<BuildRequestData, BuildResult>(result);
                         }
@@ -2657,7 +2660,7 @@ namespace Microsoft.Build.Execution
                         {
                             _scheduler!.WriteDetailedSummary(response.BuildResult.SubmissionId);
                         }
-
+                        MSBuildEventSource.Log.BuildSubmissionFlow(response.BuildResult.SubmissionId.ToString(), string.Join(";", response.BuildRequest.Targets), "BuildManager.PerformSchedulingActions");
                         ReportResultsToSubmission<BuildRequestData, BuildResult>(response.BuildResult);
                         break;
 
@@ -2740,6 +2743,7 @@ namespace Microsoft.Build.Execution
                         submission.CompleteLogging();
                     }
 
+                    MSBuildEventSource.Log.BuildSubmissionFlow(result.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), "BuildManager.ReportResultsToSubmission");
                     submission.CompleteResults(result);
                     CheckSubmissionCompletenessAndRemove(submission);
                 }
@@ -2753,6 +2757,7 @@ namespace Microsoft.Build.Execution
         {
             lock (_syncLock)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), "BuildManager.CheckSubmissionCompletenessAndRemove");
                 // If the submission has completed or never started, remove it.
                 if (submission.IsCompleted || !submission.IsStarted)
                 {
@@ -2845,6 +2850,7 @@ namespace Microsoft.Build.Execution
                         {
                             continue;
                         }
+                        MSBuildEventSource.Log.BuildSubmissionFlow(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), "BuildManager.OnThreadException");
 
                         // Attach the exception to this submission if it does not already have an exception associated with it
                         if (!submission.IsCompleted && submission.BuildResultBase != null && submission.BuildResultBase.Exception == null)

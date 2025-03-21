@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using Microsoft.Build.Collections;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
@@ -255,11 +256,12 @@ namespace Microsoft.Build.BackEnd.Logging
         }
 
         /// <summary>
-        /// Log that the project has finished
+        /// Log that the project has finished.
         /// </summary>
-        /// <param name="success">Did the build succeede or not</param>
+        /// <param name="success">Did the build succeeded or not</param>
         internal void LogProjectFinished(bool success)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(BuildEventContext.SubmissionId.ToString(), "", "ProjectLoggingContext.LogProjectFinished");
             ErrorUtilities.VerifyThrow(this.IsValid, "invalid");
             LoggingService.LogProjectFinished(BuildEventContext, _projectFullPath, success);
             this.IsValid = false;

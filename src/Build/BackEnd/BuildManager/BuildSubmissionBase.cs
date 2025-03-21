@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Shared;
 
 namespace Microsoft.Build.Execution
@@ -65,7 +66,7 @@ namespace Microsoft.Build.Execution
         public object? AsyncContext { get; protected set; }
 
         /// <summary>
-        /// A <see cref="System.Threading.WaitHandle"/> which will be signalled when the build is complete.  Valid after <see cref="BuildSubmissionBase{TRequestData,TResultData}.Execute()"/> or <see cref="BuildSubmission.ExecuteAsync(BuildSubmissionCompleteCallback, object)"/> returns, otherwise null.
+        /// A <see cref="System.Threading.WaitHandle"/> which will be signaled when the build is complete.  Valid after <see cref="BuildSubmissionBase{TRequestData,TResultData}.Execute()"/> or <see cref="BuildSubmission.ExecuteAsync(BuildSubmissionCompleteCallback, object)"/> returns, otherwise null.
         /// </summary>
         public WaitHandle WaitHandle => CompletionEvent;
 
@@ -85,10 +86,12 @@ namespace Microsoft.Build.Execution
         internal void CompleteLogging()
         {
             LoggingCompleted = true;
+            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmissionBase.CompleteLogging");
             CheckForCompletion();
         }
 
-        protected internal virtual void OnCompletition() { }
+        protected internal virtual void OnCompletion() { }
+
         protected internal abstract void CheckForCompletion();
 
         internal abstract BuildResultBase CompleteResultsWithException(Exception exception);

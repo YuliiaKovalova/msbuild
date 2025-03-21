@@ -1351,13 +1351,13 @@ namespace Microsoft.Build.BackEnd
             if (blocker.BuildRequests == null)
             {
                 // This is the case when we aren't blocking on new requests, but rather an in-progress request which is executing a target for which we need results.
-                TraceEngine("Blocking global request {0} on global request {1} because it is already executing target {2}", blocker.BlockedRequestId, blocker.BlockingRequestId, blocker.BlockingTarget);
+                TraceEngine("Blocking global request {0} on global request {1} because it is already executing target {2}", blocker.BlockedGlobalRequestId, blocker.BlockingRequestId, blocker.BlockingTarget);
             }
             else
             {
                 foreach (BuildRequest blockingRequest in blocker.BuildRequests)
                 {
-                    TraceEngine("Sending node request {0} (configuration {1}) with parent {2} to Build Manager", blockingRequest.NodeRequestId, blockingRequest.ConfigurationId, blocker.BlockedRequestId);
+                    TraceEngine("Sending node request {0} (configuration {1}) with parent {2} to Build Manager", blockingRequest.NodeRequestId, blockingRequest.ConfigurationId, blocker.BlockedGlobalRequestId);
                 }
             }
 

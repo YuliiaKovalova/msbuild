@@ -1051,6 +1051,7 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private void RaiseBuildRequestCompleted(BuildRequestEntry entryToComplete)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(entryToComplete.Request.SubmissionId.ToString(), string.Join(";", entryToComplete.Request.Targets), "RequestBuilder.RaiseBuildRequestCompleted");
             OnBuildRequestCompleted?.Invoke(entryToComplete);
         }
 

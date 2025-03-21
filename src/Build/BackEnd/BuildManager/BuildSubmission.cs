@@ -5,6 +5,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 using Microsoft.Build.BackEnd;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Shared;
 
 namespace Microsoft.Build.Execution
@@ -39,10 +40,10 @@ namespace Microsoft.Build.Execution
             BuildRequestData = requestData;
         }
 
-        //
         // Unfortunately covariant overrides are not available for .NET 472,
         //  so we have to use two set of properties for derived classes.
         internal override BuildResultBase? BuildResultBase => BuildResult;
+
         internal override BuildRequestDataBase BuildRequestDataBase => BuildRequestData;
 
         /// <summary>
@@ -66,6 +67,7 @@ namespace Microsoft.Build.Execution
             object? context,
             bool allowMainThreadBuild)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.ExecuteAsync");
             ErrorUtilities.VerifyThrowInvalidOperation(!IsCompleted, "SubmissionAlreadyComplete");
             _completionCallback = callback;
             AsyncContext = context;
@@ -77,11 +79,12 @@ namespace Microsoft.Build.Execution
         /// </summary>
         internal void CompleteResults(TResultData result)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(result.SubmissionId.ToString(), string.Join(";", BuildRequestData.TargetNames), "BuildSubmission.CompleteResults");
             ErrorUtilities.VerifyThrowArgumentNull(result);
             CheckResultValidForCompletion(result);
 
             BuildResult ??= result;
-
+         
             CheckForCompletion();
         }
 
@@ -104,12 +107,13 @@ namespace Microsoft.Build.Execution
         /// </summary>
         protected internal override void CheckForCompletion()
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.CheckForCompletion");
             if (BuildResult != null && LoggingCompleted)
             {
                 bool hasCompleted = (Interlocked.Exchange(ref CompletionInvoked, 1) == 1);
                 if (!hasCompleted)
                 {
-                    OnCompletition();
+                    OnCompletion();
 
                     CompletionEvent.Set();
 
@@ -117,6 +121,7 @@ namespace Microsoft.Build.Execution
                     {
                         void Callback(object? state)
                         {
+                            MSBuildEventSource.Log.BuildSubmissionFlowStop(SubmissionId.ToString(), string.Join(";", BuildRequestData.EntryProjectsFullPath), string.Join(";", BuildRequestData.TargetNames));
                             _completionCallback(this);
                         }
 
@@ -232,8 +237,9 @@ namespace Microsoft.Build.Execution
             }
         }
 
-        protected internal override void OnCompletition()
+        protected internal override void OnCompletion()
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.OnCompletion");
             // Did this submission have warnings elevated to errors? If so, mark it as
             // failed even though it succeeded (with warnings--but they're errors).
             if (BuildResult != null &&

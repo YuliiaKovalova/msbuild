@@ -149,7 +149,7 @@ namespace Microsoft.Build.BackEnd
         /// <summary>
         /// Accessor for the blocked request id.
         /// </summary>
-        public int BlockedRequestId
+        public int BlockedGlobalRequestId
         {
             [DebuggerStepThrough]
             get
