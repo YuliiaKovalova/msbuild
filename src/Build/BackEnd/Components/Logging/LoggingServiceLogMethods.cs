@@ -517,7 +517,7 @@ namespace Microsoft.Build.BackEnd.Logging
 
         public void LogProjectStarted(ProjectStartedEventArgs buildEvent)
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow(buildEvent.BuildEventContext.SubmissionId.ToString(), "", "LoggingService.LogProjectStarted");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(buildEvent.BuildEventContext.SubmissionId.ToString(), "", "LoggingService.LogProjectStarted");
             ProcessLoggingEvent(buildEvent);
         }
 

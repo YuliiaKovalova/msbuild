@@ -86,7 +86,7 @@ namespace Microsoft.Build.Execution
         internal void CompleteLogging()
         {
             LoggingCompleted = true;
-            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmissionBase.CompleteLogging");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmissionBase.CompleteLogging");
             CheckForCompletion();
         }
 
