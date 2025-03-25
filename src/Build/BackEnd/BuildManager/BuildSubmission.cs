@@ -67,7 +67,7 @@ namespace Microsoft.Build.Execution
             object? context,
             bool allowMainThreadBuild)
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.ExecuteAsync");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.ExecuteAsync");
             ErrorUtilities.VerifyThrowInvalidOperation(!IsCompleted, "SubmissionAlreadyComplete");
             _completionCallback = callback;
             AsyncContext = context;
@@ -79,7 +79,7 @@ namespace Microsoft.Build.Execution
         /// </summary>
         internal void CompleteResults(TResultData result)
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow(result.SubmissionId.ToString(), string.Join(";", BuildRequestData.TargetNames), "BuildSubmission.CompleteResults");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", BuildRequestData.TargetNames), "BuildSubmission.CompleteResults");
             ErrorUtilities.VerifyThrowArgumentNull(result);
             CheckResultValidForCompletion(result);
 
@@ -107,7 +107,7 @@ namespace Microsoft.Build.Execution
         /// </summary>
         protected internal override void CheckForCompletion()
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.CheckForCompletion");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.CheckForCompletion");
             if (BuildResult != null && LoggingCompleted)
             {
                 bool hasCompleted = (Interlocked.Exchange(ref CompletionInvoked, 1) == 1);
@@ -239,7 +239,7 @@ namespace Microsoft.Build.Execution
 
         protected internal override void OnCompletion()
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.OnCompletion");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(SubmissionId.ToString(), string.Join(";", BuildRequestDataBase.TargetNames), "BuildSubmission.OnCompletion");
             // Did this submission have warnings elevated to errors? If so, mark it as
             // failed even though it succeeded (with warnings--but they're errors).
             if (BuildResult != null &&

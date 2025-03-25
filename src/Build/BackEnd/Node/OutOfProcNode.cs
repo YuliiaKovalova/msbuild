@@ -377,7 +377,7 @@ namespace Microsoft.Build.Execution
             if (_nodeEndpoint.LinkStatus == LinkStatus.Active)
             {
                 _nodeEndpoint.SendData(result);
-                MSBuildEventSource.Log.BuildSubmissionFlow(request.GlobalRequestId.ToString(), request.SubmissionId.ToString(), _buildParameters.NodeId.ToString(), request.Targets.ToString(), "OutOfProcNode.OnRequestComplete");
+                MSBuildEventSource.Log.BuildSubmissionFlow(request.GlobalRequestId.ToString(), request.SubmissionId.ToString(), _buildParameters.NodeId.ToString(), string.Join(";", request.Targets), "OutOfProcNode.OnRequestComplete");
             }
 
 #if FEATURE_REPORTFILEACCESSES

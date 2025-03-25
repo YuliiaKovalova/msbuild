@@ -674,9 +674,9 @@ namespace Microsoft.Build.Eventing
         }
 
         [Event(93, Keywords = Keywords.All)]
-        public void BuildSubmissionFlowStart(string submissionId, string projectPath, string targets)
+        public void BuildSubmissionFlowStart(string globalRequestId, string submissionId, string targets, string currentStage)
         {
-            WriteEvent(93, submissionId, projectPath, targets);
+            WriteEvent(93, globalRequestId, submissionId, targets, currentStage);
         }
 
         [Event(94, Keywords = Keywords.All)]
@@ -686,7 +686,7 @@ namespace Microsoft.Build.Eventing
         }
 
         [Event(95, Keywords = Keywords.All)]
-        public void BuildSubmissionFlow(string submissionId, string targets, string currentStage)
+        public void BuildSubmissionFlow2(string submissionId, string targets, string currentStage)
         {
             WriteEvent(95, submissionId, targets, currentStage);
         }
