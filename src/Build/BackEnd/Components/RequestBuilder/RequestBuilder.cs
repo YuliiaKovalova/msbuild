@@ -1144,7 +1144,7 @@ namespace Microsoft.Build.BackEnd
                     _requestEntry.Request.BuildEventContext);
             }
 
-            MSBuildEventSource.Log.BuildSubmissionFlow2(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(RequestEntry.Request.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
 
             try
             {

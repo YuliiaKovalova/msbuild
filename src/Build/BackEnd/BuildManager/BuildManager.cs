@@ -2373,6 +2373,8 @@ namespace Microsoft.Build.Execution
             {
                 foreach (BuildRequest request in blocker.BuildRequests)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(request.SubmissionId.ToString(), string.Join(";", request.Targets), $"BuildManager.HandleNewRequest in node {node}");
+
                     BuildRequestConfiguration config = _configCache![request.ConfigurationId];
                     if (FileUtilities.IsSolutionFilename(config.ProjectFullPath))
                     {
@@ -2462,6 +2464,8 @@ namespace Microsoft.Build.Execution
                 configuration.ProjectInitialTargets ??= result.InitialTargets;
                 configuration.ProjectTargets ??= result.ProjectTargets;
             }
+
+            MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Empty, "BuildManager.HandleResult");
 
             // Only report results to the project cache services if it's the result for a build submission.
             // Note that graph builds create a submission for each node in the graph, so each node in the graph will be
@@ -2653,6 +2657,7 @@ namespace Microsoft.Build.Execution
                 switch (response.Action)
                 {
                     case ScheduleActionType.NoAction:
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.NoAction");
                         break;
 
                     case ScheduleActionType.SubmissionComplete:
@@ -2660,17 +2665,19 @@ namespace Microsoft.Build.Execution
                         {
                             _scheduler!.WriteDetailedSummary(response.BuildResult.SubmissionId);
                         }
-                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions");
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions.SubmissionComplete");
                         ReportResultsToSubmission<BuildRequestData, BuildResult>(response.BuildResult);
                         break;
 
                     case ScheduleActionType.CircularDependency:
                     case ScheduleActionType.ResumeExecution:
                     case ScheduleActionType.ReportResults:
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions.ReportResults");
                         _nodeManager!.SendData(response.NodeId, response.Unblocker);
                         break;
 
                     case ScheduleActionType.CreateNode:
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions.CreateNode");
                         IList<NodeInfo> newNodes = _nodeManager!.CreateNodes(GetNodeConfiguration(), response.RequiredNodeType, response.NumberOfNodesToCreate);
 
                         if (newNodes?.Count != response.NumberOfNodesToCreate || newNodes.Any(n => n == null))
@@ -2694,6 +2701,7 @@ namespace Microsoft.Build.Execution
 
                     case ScheduleActionType.Schedule:
                     case ScheduleActionType.ScheduleWithConfiguration:
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions.Schedule");
                         if (response.Action == ScheduleActionType.ScheduleWithConfiguration)
                         {
                             // Only actually send the configuration if the node doesn't know about it.  The scheduler only keeps track
