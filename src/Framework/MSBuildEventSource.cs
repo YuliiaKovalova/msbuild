@@ -79,6 +79,7 @@ namespace Microsoft.Build.Eventing
         /// <summary>
         /// Call this method to notify listeners of information of how a project file built.
         /// <param name="projectPath">Filename of the project being built.</param>
+        /// <param name="submissionId">Built project submissionId</param>
         /// </summary>
         [Event(5, Keywords = Keywords.All | Keywords.PerformanceLog)]
         public void BuildProjectStart(string projectPath, string submissionId)
@@ -88,6 +89,7 @@ namespace Microsoft.Build.Eventing
 
         /// <param name="projectPath">Filename of the project being built.</param>
         /// <param name="targets">Names of the targets that built.</param>
+        /// <param name="submissionId">Built project submissionId</param>
         [Event(6, Keywords = Keywords.All | Keywords.PerformanceLog)]
         public void BuildProjectStop(string projectPath, string targets, string submissionId)
         {

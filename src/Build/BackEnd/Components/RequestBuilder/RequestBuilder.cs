@@ -1144,7 +1144,7 @@ namespace Microsoft.Build.BackEnd
                     _requestEntry.Request.BuildEventContext);
             }
 
-            MSBuildEventSource.Log.BuildSubmissionFlow(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
 
             try
             {
@@ -1357,8 +1357,8 @@ namespace Microsoft.Build.BackEnd
                 args.WarningsNotAsErrors = loggingService.GetWarningsNotAsErrors(projectBuildEventContext).ToHashSet(StringComparer.OrdinalIgnoreCase);
             }
 
+            MSBuildEventSource.Log.BuildSubmissionFlow2(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.HandleProjectStarted");
             // We can log the event only after the warning as errors and messages have been set and added
-            MSBuildEventSource.Log.BuildSubmissionFlow(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.HandleProjectStarted");
             loggingService?.LogProjectStarted(args);
 
             buildCheckManager?.StartProjectRequest(
