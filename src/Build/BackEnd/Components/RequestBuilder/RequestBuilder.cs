@@ -1094,7 +1094,7 @@ namespace Microsoft.Build.BackEnd
         {
             ErrorUtilities.VerifyThrow(_targetBuilder != null, "Target builder is null");
 
-            // We consider this the entrypoint for the project build for purposes of BuildCheck processing
+            // We consider this the entry point for the project build for purposes of BuildCheck processing
             bool isRestoring = _requestEntry.RequestConfiguration.GlobalProperties[MSBuildConstants.MSBuildIsRestoring] is not null;
 
             var buildCheckManager = isRestoring
@@ -1108,7 +1108,7 @@ namespace Microsoft.Build.BackEnd
             // logged with the node logging context
             _projectLoggingContext = null;
 
-            MSBuildEventSource.Log.BuildProjectStart(_requestEntry.RequestConfiguration.ProjectFullPath);
+            MSBuildEventSource.Log.BuildProjectStart(_requestEntry.RequestConfiguration.ProjectFullPath, _requestEntry.Request.SubmissionId.ToString());
 
             try
             {
@@ -1144,6 +1144,7 @@ namespace Microsoft.Build.BackEnd
                     _requestEntry.Request.BuildEventContext);
             }
 
+            MSBuildEventSource.Log.BuildSubmissionFlow(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
 
             try
             {
@@ -1205,8 +1206,7 @@ namespace Microsoft.Build.BackEnd
 
                 if (MSBuildEventSource.Log.IsEnabled())
                 {
-                    MSBuildEventSource.Log.BuildProjectStop(_requestEntry.RequestConfiguration.ProjectFullPath,
-                        string.Join(", ", allTargets));
+                    MSBuildEventSource.Log.BuildProjectStop(_requestEntry.RequestConfiguration.ProjectFullPath, string.Join(", ", allTargets), _requestEntry.Request.SubmissionId.ToString());
                 }
 
                 return result;
@@ -1358,6 +1358,7 @@ namespace Microsoft.Build.BackEnd
             }
 
             // We can log the event only after the warning as errors and messages have been set and added
+            MSBuildEventSource.Log.BuildSubmissionFlow(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.HandleProjectStarted");
             loggingService?.LogProjectStarted(args);
 
             buildCheckManager?.StartProjectRequest(

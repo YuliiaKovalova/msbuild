@@ -571,6 +571,8 @@ namespace Microsoft.Build.BackEnd.Logging
                 }
             }
 
+            MSBuildEventSource.Log.BuildSubmissionFlow(submissionId.ToString(), "", "LoggingService.CreateProjectStarted");
+
             BuildEventContext projectBuildEventContext = new BuildEventContext(submissionId, nodeBuildEventContext.NodeId, evaluationId, configurationId, projectContextId, BuildEventContext.InvalidTargetId, BuildEventContext.InvalidTaskId);
 
             ErrorUtilities.VerifyThrow(parentBuildEventContext != null, "Need a parentBuildEventContext");
