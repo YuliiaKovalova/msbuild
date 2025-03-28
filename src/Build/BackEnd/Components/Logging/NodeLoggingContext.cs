@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
@@ -120,6 +121,7 @@ namespace Microsoft.Build.BackEnd.Logging
                 }
             }
 
+            MSBuildEventSource.Log.BuildSubmissionFlow2(request.SubmissionId.ToString(), string.Join(";", request.Targets), $"NodeLoggingContext.LogRequestHandledFromCache");
             projectLoggingContext.LogProjectFinished(result.OverallResult == BuildResultCode.Success);
         }
     }

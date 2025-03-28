@@ -9,6 +9,7 @@ using System.Linq;
 using Microsoft.Build.Shared;
 using Microsoft.Build.Execution;
 using BuildAbortedException = Microsoft.Build.Exceptions.BuildAbortedException;
+using Microsoft.Build.Eventing;
 
 #nullable disable
 
@@ -301,6 +302,7 @@ namespace Microsoft.Build.BackEnd
         /// <param name="result">The result for the request.</param>
         public void ReportResult(BuildResult result)
         {
+            MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult");
             lock (GlobalLock)
             {
                 ErrorUtilities.VerifyThrowArgumentNull(result);
@@ -361,6 +363,7 @@ namespace Microsoft.Build.BackEnd
 
                 if (addResults)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult->addresults");
                     // Update the local results record
                     _outstandingResults ??= new Dictionary<int, BuildResult>();
                     ErrorUtilities.VerifyThrow(!_outstandingResults.ContainsKey(result.NodeRequestId), "Request already contains results.");
@@ -370,6 +373,7 @@ namespace Microsoft.Build.BackEnd
                 // If we are out of outstanding requests, we are ready to continue.
                 if (_outstandingRequests == null && _unresolvedConfigurations == null && _blockingGlobalRequestId == BuildRequest.InvalidGlobalRequestId)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult->ChangeState(Ready)");
                     ChangeState(BuildRequestEntryState.Ready);
                 }
             }

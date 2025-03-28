@@ -9,9 +9,11 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
+using System.Xml.Linq;
 using Microsoft.Build.BackEnd.Logging;
-using Microsoft.Build.Experimental.BuildCheck.Infrastructure;
+using Microsoft.Build.Eventing;
 using Microsoft.Build.Execution;
+using Microsoft.Build.Experimental.BuildCheck.Infrastructure;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
 using Microsoft.Build.Shared.Debugging;
@@ -550,6 +552,7 @@ namespace Microsoft.Build.BackEnd
 
                                     if (cacheResponse.Type == ResultsCacheResponseType.Satisfied)
                                     {
+                                        MSBuildEventSource.Log.BuildSubmissionFlow2(request.SubmissionId.ToString(), string.Join(";", request.Targets), $"BuildRequestEngine.ReportConfigurationResponse");
                                         // We have a result, give it back to this request.
                                         currentEntry.ReportResult(cacheResponse.Results);
 
@@ -1228,6 +1231,7 @@ namespace Microsoft.Build.BackEnd
                             // Log the fact that we handled this from the cache.
                             _nodeLoggingContext.LogRequestHandledFromCache(newRequest, _configCache[newRequest.ConfigurationId], response.Results);
 
+                            MSBuildEventSource.Log.BuildSubmissionFlow2(issuingEntry.Request.SubmissionId.ToString(), string.Join(";", request.Targets), $"BuildRequestEngine.IssueBuildRequests");
                             TraceEngine(
                                 "Request {0} (node request {1}) with targets ({2}) satisfied from cache",
                                 newRequest.GlobalRequestId,

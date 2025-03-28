@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Microsoft.Build.BackEnd;
 using Microsoft.Build.BackEnd.Components.Caching;
@@ -395,6 +396,7 @@ namespace Microsoft.Build.Execution
         {
             if (_nodeEndpoint.LinkStatus == LinkStatus.Active)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow(blocker.BlockedGlobalRequestId.ToString(), string.Join(";", blocker.BuildRequests.Select(br => br.SubmissionId)), _buildParameters.NodeId.ToString(), string.Join(";", blocker.TargetsInProgress), "OutOfProcNode.OnNewRequest");
                 _nodeEndpoint.SendData(blocker);
             }
         }
@@ -417,6 +419,7 @@ namespace Microsoft.Build.Execution
         {
             if (_nodeEndpoint.LinkStatus == LinkStatus.Active)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow(request.GlobalRequestId.ToString(), "no submission id", _buildParameters.NodeId.ToString(), "", "OutOfProcNode.ResourceRequest");
                 _nodeEndpoint.SendData(request);
             }
         }
