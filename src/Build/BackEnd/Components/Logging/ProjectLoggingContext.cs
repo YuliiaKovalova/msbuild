@@ -261,7 +261,7 @@ namespace Microsoft.Build.BackEnd.Logging
         /// <param name="success">Did the build succeeded or not</param>
         internal void LogProjectFinished(bool success)
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow2(BuildEventContext.SubmissionId.ToString(), "", "ProjectLoggingContext.LogProjectFinished");
+            MSBuildEventSource.Log.BuildSubmissionFlow4(BuildEventContext.SubmissionId.ToString(), _projectFullPath, "", "ProjectLoggingContext.LogProjectFinished");
             ErrorUtilities.VerifyThrow(this.IsValid, "invalid");
             LoggingService.LogProjectFinished(BuildEventContext, _projectFullPath, success);
             this.IsValid = false;

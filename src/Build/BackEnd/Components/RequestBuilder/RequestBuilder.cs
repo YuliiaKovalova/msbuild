@@ -606,7 +606,7 @@ namespace Microsoft.Build.BackEnd
                     }
                     else
                     {
-                        // We were signalled on one of the other handles.  Return control to the caller.
+                        // We were signaled on one of the other handles.  Return control to the caller.
                         return signaledIndex - 1;
                     }
                 }
@@ -786,6 +786,7 @@ namespace Microsoft.Build.BackEnd
             }
             catch (InvalidProjectFileException ex)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow2(_requestEntry.Request.SubmissionId.ToString(), "", "RequestBuilder.RequestThreadProc -> catch InvalidProjectFileException");
                 if (_projectLoggingContext != null)
                 {
                     _projectLoggingContext.LogInvalidProjectFileError(ex);
@@ -800,6 +801,7 @@ namespace Microsoft.Build.BackEnd
             // This is a workaround for https://github.com/dotnet/msbuild/issues/2064. It catches the exception case and turns it into a more understandable warning.
             catch (UnbuildableProjectTypeException ex)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow2(_requestEntry.Request.SubmissionId.ToString(), "", "RequestBuilder.RequestThreadProc -> catch UnbuildableProjectTypeException");
                 thrownException = ex;
                 if (_projectLoggingContext is null)
                 {
@@ -812,6 +814,8 @@ namespace Microsoft.Build.BackEnd
             }
             catch (Exception ex)
             {
+                MSBuildEventSource.Log.BuildSubmissionFlow2(_requestEntry.Request.SubmissionId.ToString(), "", "RequestBuilder.RequestThreadProc -> catch");
+
                 thrownException = ex;
                 if (ex is BuildAbortedException)
                 {
@@ -1144,7 +1148,7 @@ namespace Microsoft.Build.BackEnd
                     _requestEntry.Request.BuildEventContext);
             }
 
-            MSBuildEventSource.Log.BuildSubmissionFlow2(_projectLoggingContext.BuildEventContext.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
+            MSBuildEventSource.Log.BuildSubmissionFlow2(_requestEntry.Request.SubmissionId.ToString(), "", "RequestBuilder.BuildProject");
 
             try
             {

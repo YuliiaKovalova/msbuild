@@ -694,9 +694,27 @@ namespace Microsoft.Build.Eventing
         }
 
         [Event(96, Keywords = Keywords.All)]
+        public void BuildSubmissionFlow3(string globalRequestId, string submissionId, string targets, string currentStage)
+        {
+            WriteEvent(96, globalRequestId, submissionId, targets, currentStage);
+        }
+
+        [Event(97, Keywords = Keywords.All)]
+        public void BuildSubmissionFlow4(string submissionId, string projectPath, string targets, string currentStage)
+        {
+            WriteEvent(97, submissionId, projectPath, targets, currentStage);
+        }
+
+        [Event(98, Keywords = Keywords.All)]
+        public void BuildSubmissionFlow5(string submissionId, string currentStage)
+        {
+            WriteEvent(98, submissionId, currentStage);
+        }
+
+        [Event(99, Keywords = Keywords.All)]
         public void BuildSubmissionFlowStop(string submissionId, string projectPath, string targets)
         {
-            WriteEvent(96, submissionId, projectPath, targets);
+            WriteEvent(99, submissionId, projectPath, targets);
         }
         #endregion
     }

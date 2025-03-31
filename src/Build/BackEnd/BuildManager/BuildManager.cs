@@ -1709,6 +1709,7 @@ namespace Microsoft.Build.Execution
         {
             Debug.Assert(!Monitor.IsEntered(_syncLock));
 
+            MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), "", $"BuildManager.HandleSubmissionException -> LoggingCompleted {submission.LoggingCompleted}");
             if (ex is AggregateException ae)
             {
                 // If there's exactly 1, just flatten it
@@ -1759,6 +1760,7 @@ namespace Microsoft.Build.Execution
             {
                 if (submissionNeedsCompletion)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow3("no global request id", submission.SubmissionId.ToString(), "", $"BuildManager.HandleSubmissionException -> LoggingCompleted {submission.LoggingCompleted}");
                     submission.CompleteLogging();
                 }
 
@@ -1904,7 +1906,7 @@ namespace Microsoft.Build.Execution
 
                     lock (_syncLock)
                     {
-                        MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), "BuildManager.IssueBuildSubmissionToSchedulerImpl");
+                        MSBuildEventSource.Log.BuildSubmissionFlow3(submission.BuildRequest?.GlobalRequestId.ToString() ?? "no global request id", submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), $"BuildManager.IssueBuildSubmissionToSchedulerImpl -> LoggingCompleted {submission.LoggingCompleted}");
                         submission.CompleteLogging();
                         ReportResultsToSubmission<BuildRequestData, BuildResult>(new BuildResult(submission.BuildRequest!, ex));
                         _overallBuildSuccess = false;
@@ -2350,7 +2352,7 @@ namespace Microsoft.Build.Execution
                             }
 
                             _resultsCache!.AddResult(result);
-                            MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), "BuildManager.HandleCacheResult");
+                            MSBuildEventSource.Log.BuildSubmissionFlow3(submission.BuildRequest?.GlobalRequestId.ToString() ?? "no global request id", submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestData.TargetNames), $"BuildManager.HandleCacheResult -> LoggingCompleted: {submission.LoggingCompleted}");
                             submission.CompleteLogging();
                             ReportResultsToSubmission<BuildRequestData, BuildResult>(result);
                         }
@@ -2612,6 +2614,7 @@ namespace Microsoft.Build.Execution
 
                     if (!CompleteSubmissionFromCache(submission))
                     {
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), "", $"BuildManager.CheckForActiveNodesAndCleanUpSubmissions -> LoggingCompleted: {submission.LoggingCompleted}");
                         submission.CompleteResultsWithException(new BuildAbortedException());
                     }
 
@@ -2660,7 +2663,7 @@ namespace Microsoft.Build.Execution
                         {
                             _scheduler!.WriteDetailedSummary(response.BuildResult.SubmissionId);
                         }
-                        MSBuildEventSource.Log.BuildSubmissionFlow2(response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions");
+                        MSBuildEventSource.Log.BuildSubmissionFlow3(response.BuildRequest?.GlobalRequestId.ToString() ?? "no global request id", response.BuildResult.SubmissionId.ToString(), response.BuildRequest != null ? string.Join(";", response.BuildRequest.Targets) : string.Empty, "BuildManager.PerformSchedulingActions");
                         ReportResultsToSubmission<BuildRequestData, BuildResult>(response.BuildResult);
                         break;
 
@@ -2738,6 +2741,7 @@ namespace Microsoft.Build.Execution
                      * If any other exception happened and logging is not completed, then go ahead and complete it now since this is the last place to do it.
                      * Otherwise the submission would remain uncompleted, potentially causing hangs (EndBuild waiting on all BuildSubmissions, users waiting on BuildSubmission, or expecting a callback, etc)
                      */
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), "", $"BuildManager.ReportResultsToSubmission -> LoggingCompleted: {submission.LoggingCompleted}");
                     if (!submission.LoggingCompleted && result.Exception != null)
                     {
                         submission.CompleteLogging();
@@ -2757,7 +2761,7 @@ namespace Microsoft.Build.Execution
         {
             lock (_syncLock)
             {
-                MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), "BuildManager.CheckSubmissionCompletenessAndRemove");
+                MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), $"BuildManager.CheckSubmissionCompletenessAndRemove -> IsCompleted: {submission.IsCompleted} IsStarted: {submission.IsStarted} LoggingCompleted: {submission.LoggingCompleted}");
                 // If the submission has completed or never started, remove it.
                 if (submission.IsCompleted || !submission.IsStarted)
                 {
@@ -2850,7 +2854,7 @@ namespace Microsoft.Build.Execution
                         {
                             continue;
                         }
-                        MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), "BuildManager.OnThreadException");
+                        MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), $"BuildManager.OnThreadException -> LoggingCompleted {submission.LoggingCompleted}");
 
                         // Attach the exception to this submission if it does not already have an exception associated with it
                         if (!submission.IsCompleted && submission.BuildResultBase != null && submission.BuildResultBase.Exception == null)
@@ -2898,6 +2902,7 @@ namespace Microsoft.Build.Execution
                             _projectStartedEvents.Remove(e.BuildEventContext.SubmissionId);
                             if (_buildSubmissions.TryGetValue(e.BuildEventContext.SubmissionId, out var submission))
                             {
+                                MSBuildEventSource.Log.BuildSubmissionFlow2(submission.SubmissionId.ToString(), string.Join(";", submission.BuildRequestDataBase.TargetNames), $"BuildManager.OnProjectFinished -> LoggingCompleted {submission.LoggingCompleted}");
                                 submission.CompleteLogging();
                                 CheckSubmissionCompletenessAndRemove(submission);
                             }
