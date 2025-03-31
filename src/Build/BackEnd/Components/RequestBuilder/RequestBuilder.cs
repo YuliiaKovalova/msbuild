@@ -601,6 +601,8 @@ namespace Microsoft.Build.BackEnd
                         // happen in parallel on the same thread, so there is no race.
                         threadingData.InstanceForMainThread = null;
 
+                        MSBuildEventSource.Log.BuildSubmissionFlow5(submissionId.ToString(), "RequestBuilder.WaitWithBuilderThreadStart");
+
                         // Now wait for the request to build.
                         builder.RequestThreadProc(setThreadParameters: false).Wait();
                     }
@@ -703,6 +705,7 @@ namespace Microsoft.Build.BackEnd
                     _requestTask = Task.Factory.StartNew(
                         () =>
                         {
+                            MSBuildEventSource.Log.BuildSubmissionFlow5(_requestEntry.Request.SubmissionId.ToString(), "RequestBuilder.StartBuilderThread");
                             return this.RequestThreadProc(setThreadParameters: true);
                         },
                         _cancellationTokenSource.Token,
@@ -779,6 +782,7 @@ namespace Microsoft.Build.BackEnd
                 {
                     SetCommonWorkerThreadParameters();
                 }
+                MSBuildEventSource.Log.BuildSubmissionFlow5(_requestEntry.Request.SubmissionId.ToString(), "RequestBuilder.RequestThreadProc");
                 MSBuildEventSource.Log.RequestThreadProcStart();
                 VerifyEntryInActiveState();
                 result = await BuildProject();

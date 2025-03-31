@@ -1355,10 +1355,12 @@ namespace Microsoft.Build.Execution
 
                         if (_projectCacheService!.ShouldUseCache(resolvedConfiguration))
                         {
+                            MSBuildEventSource.Log.BuildSubmissionFlow5(submission.SubmissionId.ToString(), "BEFORE BuildManager.IssueCacheRequestForBuildSubmission");
                             IssueCacheRequestForBuildSubmission(new CacheRequest(submission, resolvedConfiguration));
                         }
                         else
                         {
+                            MSBuildEventSource.Log.BuildSubmissionFlow5(submission.SubmissionId.ToString(), "BuildManager NO CACHE");
                             AddBuildRequestToSubmission(submission, resolvedConfiguration.ConfigurationId);
                             IssueBuildRequestForBuildSubmission(submission, resolvedConfiguration, allowMainThreadBuild);
                         }
@@ -1403,6 +1405,7 @@ namespace Microsoft.Build.Execution
                 }
                 catch (Exception e)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow5(cacheRequest.Submission.SubmissionId.ToString(), "BuildManager.IssueCacheRequestForBuildSubmission IN EXCEPTION");
                     CompleteSubmissionWithException(cacheRequest.Submission, cacheRequest.Configuration, e);
                 }
             });

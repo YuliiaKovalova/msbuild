@@ -463,10 +463,11 @@ namespace Microsoft.Build.Experimental.ProjectCache
                 CacheResult cacheResult;
                 try
                 {
-                    cacheResult = await GetCacheResultAsync(buildRequest, cacheRequest.Configuration, buildEventContext, cancellationToken);
+                    cacheResult = await GetCacheResultAsync(cacheRequest.Submission.SubmissionId.ToString(), buildRequest, cacheRequest.Configuration, buildEventContext, cancellationToken);
                 }
                 catch (Exception ex)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow5(cacheRequest.Submission.SubmissionId.ToString(), "ProjectCacheService.ProcessCacheRequestAsync IN EXCEPTION");
                     // Wrap the exception here so we can preserve the ProjectContextId
                     cacheResult = CacheResult.IndicateException(ex);
                 }
@@ -481,6 +482,7 @@ namespace Microsoft.Build.Experimental.ProjectCache
 
                 lock (configuration)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow5(cacheRequest.Submission.SubmissionId.ToString(), "ProjectCacheService.EvaluateProjectIfNecessary");
                     if (!configuration.IsLoaded)
                     {
                         configuration.LoadProjectIntoConfiguration(
@@ -497,7 +499,7 @@ namespace Microsoft.Build.Experimental.ProjectCache
             }
         }
 
-        private async ValueTask<CacheResult> GetCacheResultAsync(BuildRequestData buildRequest, BuildRequestConfiguration buildRequestConfiguration, BuildEventContext buildEventContext, CancellationToken cancellationToken)
+        private async ValueTask<CacheResult> GetCacheResultAsync(string submissionId, BuildRequestData buildRequest, BuildRequestConfiguration buildRequestConfiguration, BuildEventContext buildEventContext, CancellationToken cancellationToken)
         {
             ErrorUtilities.VerifyThrowInternalNull(buildRequest.ProjectInstance, nameof(buildRequest.ProjectInstance));
 
@@ -553,8 +555,14 @@ namespace Microsoft.Build.Experimental.ProjectCache
                 }
                 catch (Exception e) when (e is not ProjectCacheException)
                 {
+                    MSBuildEventSource.Log.BuildSubmissionFlow5(submissionId, "ProjectCacheService.GetCacheResultAsync IN EXCEPTION");
                     HandlePluginException(e, nameof(ProjectCachePluginBase.GetCacheResultAsync));
                     return null!; // Unreachable
+                }
+                catch (ProjectCacheException)
+                {
+                    MSBuildEventSource.Log.BuildSubmissionFlow5(submissionId, "ProjectCacheService.GetCacheResultAsync IN ProjectCacheException EXCEPTION");
+                    throw;
                 }
                 finally
                 {
@@ -569,6 +577,7 @@ namespace Microsoft.Build.Experimental.ProjectCache
             // Handle the case of no configured plugins.
             cacheResult ??= CacheResult.IndicateNonCacheHit(CacheResultType.CacheNotApplicable);
 
+            MSBuildEventSource.Log.BuildSubmissionFlow5(submissionId, $"ProjectCacheService.GetCacheResultAsync cacheResult {cacheResult}");
             switch (cacheResult.ResultType)
             {
                 case CacheResultType.CacheHit:

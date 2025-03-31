@@ -302,12 +302,12 @@ namespace Microsoft.Build.BackEnd
         /// <param name="result">The result for the request.</param>
         public void ReportResult(BuildResult result)
         {
-            MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult");
             lock (GlobalLock)
             {
                 ErrorUtilities.VerifyThrowArgumentNull(result);
                 ErrorUtilities.VerifyThrow(State == BuildRequestEntryState.Waiting || _outstandingRequests == null, "Entry must be in the Waiting state to report results, or we must have flushed our requests due to an error. Config: {0} State: {1} Requests: {2}", RequestConfiguration.ConfigurationId, State, _outstandingRequests != null);
 
+                MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), "", $"BuildRequestEntry.ReportResult");
                 // If the matching request is in the issue list, remove it so we don't try to ask for it to be built.
                 if (_requestsToIssue != null)
                 {
@@ -363,7 +363,7 @@ namespace Microsoft.Build.BackEnd
 
                 if (addResults)
                 {
-                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult->addresults");
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), "", $"BuildRequestEntry.ReportResult->addresults");
                     // Update the local results record
                     _outstandingResults ??= new Dictionary<int, BuildResult>();
                     ErrorUtilities.VerifyThrow(!_outstandingResults.ContainsKey(result.NodeRequestId), "Request already contains results.");
@@ -373,7 +373,7 @@ namespace Microsoft.Build.BackEnd
                 // If we are out of outstanding requests, we are ready to continue.
                 if (_outstandingRequests == null && _unresolvedConfigurations == null && _blockingGlobalRequestId == BuildRequest.InvalidGlobalRequestId)
                 {
-                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), string.Join(";", result.ProjectTargets), $"BuildRequestEntry.ReportResult->ChangeState(Ready)");
+                    MSBuildEventSource.Log.BuildSubmissionFlow2(result.SubmissionId.ToString(), "", $"BuildRequestEntry.ReportResult->ChangeState(Ready)");
                     ChangeState(BuildRequestEntryState.Ready);
                 }
             }
