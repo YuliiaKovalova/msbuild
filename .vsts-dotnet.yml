@@ -156,7 +156,7 @@ extends:
         - task: MicroBuildOptProfPlugin@6
           inputs:
             ProfilingInputsDropName: '$(VisualStudio.DropName)'
-            ShouldSkipOptimize: true
+            ShouldSkipOptimize: false
             AccessToken: '$(System.AccessToken)'
             feedSource: 'https://devdiv.pkgs.visualstudio.com/DefaultCollection/_packaging/MicroBuildToolset/nuget/v3/index.json'
           displayName: 'Install OptProf Plugin'
