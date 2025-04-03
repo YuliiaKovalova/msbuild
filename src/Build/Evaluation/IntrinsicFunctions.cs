@@ -510,7 +510,7 @@ namespace Microsoft.Build.Evaluation
             parameters.Add(XMakeAttributes.architecture, architecture);
 
             HandshakeOptions desiredContext = CommunicationsUtilities.GetHandshakeOptions(taskHost: true, taskHostParameters: parameters);
-            string taskHostLocation = NodeProviderOutOfProcTaskHost.GetMSBuildLocationFromHostContext(desiredContext).msbuildExcutable;
+            string taskHostLocation = NodeProviderOutOfProcTaskHost.GetMSBuildLocationFromHostContext(desiredContext).msbuildExecutable;
 
             if (taskHostLocation != null && FileUtilities.FileExistsNoThrow(taskHostLocation))
             {
