@@ -7,7 +7,6 @@ using System.Globalization;
 using System.IO;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Shared;
 using Microsoft.Build.UnitTests;
 using Microsoft.Build.UnitTests.BackEnd;
 using Microsoft.Build.UnitTests.Shared;
