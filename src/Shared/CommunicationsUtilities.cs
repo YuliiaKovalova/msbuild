@@ -146,11 +146,6 @@ namespace Microsoft.Build.Internal
             new KeyValuePair<string, int>(nameof(sessionId), CommunicationsUtilities.AvoidEndOfHandshakeSignal(sessionId))
         ];
 
-        public override string ToString()
-        {
-            return $"{options} {salt} {fileVersionMajor} {fileVersionMinor} {fileVersionBuild} {fileVersionPrivate} {sessionId}";
-        }
-
         public virtual string GetKey() => $"{options} {salt} {fileVersionMajor} {fileVersionMinor} {fileVersionBuild} {fileVersionPrivate} {sessionId}".ToString(CultureInfo.InvariantCulture);
 
         public virtual byte? ExpectedVersionInFirstByte => CommunicationsUtilities.handshakeVersion;
