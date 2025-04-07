@@ -8,7 +8,6 @@ using System.IO;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Linq;
-using System.Net.Sockets;
 using System.Reflection;
 #if FEATURE_APARTMENT_STATE
 using System.Runtime.ExceptionServices;

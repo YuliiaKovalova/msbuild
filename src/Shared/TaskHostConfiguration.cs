@@ -148,12 +148,12 @@ namespace Microsoft.Build.BackEnd
         /// <param name="warningsAsMessages">Warning codes to be treated as messages for the current project.</param>
 #endif
         public TaskHostConfiguration(
-                string runtime,
-                int nodeId,
-                string startupDirectory,
-                IDictionary<string, string> buildProcessEnvironment,
-                CultureInfo culture,
-                CultureInfo uiCulture,
+            string runtime,
+            int nodeId,
+            string startupDirectory,
+            IDictionary<string, string> buildProcessEnvironment,
+            CultureInfo culture,
+            CultureInfo uiCulture,
 #if FEATURE_APPDOMAIN
             AppDomainSetup appDomainSetup,
 #endif
