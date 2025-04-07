@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
+#if NETFRAMEWORK
 using System.Runtime.InteropServices;
+#endif
 #if FEATURE_SECURITY_PRINCIPAL_WINDOWS
 using System.Security.Principal;
 #endif
@@ -102,13 +104,12 @@ namespace Microsoft.Build.Internal
 
             string handshakeSalt = Environment.GetEnvironmentVariable("MSBUILDNODEHANDSHAKESALT");
             CommunicationsUtilities.Trace("Handshake salt is " + handshakeSalt);
-
             bool isNetTaskHost = (nodeType & HandshakeOptions.NET) == HandshakeOptions.NET;
             string toolsDirectory = isNetTaskHost
                 ? BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory
                 : BuildEnvironmentHelper.Instance.MSBuildToolsDirectoryRoot;
-            CommunicationsUtilities.Trace("Tools directory root is " + toolsDirectory);
-            salt = CommunicationsUtilities.GetHashCode(handshakeSalt + toolsDirectory);
+            CommunicationsUtilities.Trace("Tools directory root is {0}", toolsDirectory);
+            salt = CommunicationsUtilities.GetHashCode($"{handshakeSalt}{toolsDirectory}");
 
             if (isNetTaskHost)
             {
@@ -185,8 +186,14 @@ namespace Microsoft.Build.Internal
             if (_computedHash == null)
             {
                 var input = GetKey();
+                byte[] utf8 = Encoding.UTF8.GetBytes(input);
+#if NET
+                Span<byte> bytes = stackalloc byte[SHA256.HashSizeInBytes];
+                SHA256.HashData(utf8, bytes);
+#else
                 using var sha = SHA256.Create();
-                var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
+                var bytes = sha.ComputeHash(utf8);
+#endif
                 _computedHash = Convert.ToBase64String(bytes)
                     .Replace("/", "_")
                     .Replace("=", string.Empty);
@@ -218,7 +225,7 @@ namespace Microsoft.Build.Internal
         /// <summary>
         /// Whether to trace communications
         /// </summary>
-        private static bool s_trace = Traits.Instance.DebugNodeCommunication;
+        private static readonly bool s_trace = Traits.Instance.DebugNodeCommunication;
 
         /// <summary>
         /// Lock trace to ensure we are logging in serial fashion.
@@ -589,7 +596,7 @@ namespace Microsoft.Build.Internal
 #nullable disable
 
 #if !FEATURE_APM
-        internal static async Task<int> ReadAsync(Stream stream, byte[] buffer, int bytesToRead)
+        internal static async ValueTask<int> ReadAsync(Stream stream, byte[] buffer, int bytesToRead)
         {
             int totalBytesRead = 0;
             while (totalBytesRead < bytesToRead)

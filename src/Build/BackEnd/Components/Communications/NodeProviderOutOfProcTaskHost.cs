@@ -401,7 +401,7 @@ namespace Microsoft.Build.BackEnd
         /// executable (e.g. MSBuild, MSBuildTaskHost or dotnet) and path to MSBuild.dll if we want to use a custom one.
         /// null is returned if executable cannot be resolved.
         /// </summary>
-        internal static (string msbuildExcutable, string msbuildAssemblyPath) GetMSBuildLocationFromHostContext(HandshakeOptions hostContext, IDictionary<string, string> taskHostParameters)
+        internal static (string msbuildExecutable, string msbuildAssemblyPath) GetMSBuildLocationFromHostContext(HandshakeOptions hostContext)
         {
             string toolName = GetTaskHostNameFromHostContext(hostContext);
             string toolPath = null;
@@ -479,8 +479,8 @@ namespace Microsoft.Build.BackEnd
             }
 
             return toolName != null && toolPath != null
-                ? (msbuildExcutable: Path.Combine(toolPath, toolName), msbuildAssemblyPath)
-                : (msbuildExcutable: null, null);
+                ? (msbuildExecutable: Path.Combine(toolPath, toolName), msbuildAssemblyPath)
+                : (msbuildExecutable: null, null);
 
             void ValidateNetHostSdkVersion(string path)
             {

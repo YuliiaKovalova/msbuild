@@ -103,7 +103,7 @@ namespace Microsoft.Build.BackEnd
 
 #if FEATURE_APPDOMAIN
         /// <summary>
-        /// Constructor
+        /// Constructor.
         /// </summary>
         /// <param name="runtime">Task host runtime.</param>
         /// <param name="nodeId">The ID of the node being configured.</param>
@@ -126,7 +126,7 @@ namespace Microsoft.Build.BackEnd
         /// <param name="warningsAsMessages">Warning codes to be treated as messages for the current project.</param>
 #else
         /// <summary>
-        /// Constructor
+        /// Constructor.
         /// </summary>
         /// <param name="runtime">Task host runtime.</param>
         /// <param name="nodeId">The ID of the node being configured.</param>
@@ -148,12 +148,12 @@ namespace Microsoft.Build.BackEnd
         /// <param name="warningsAsMessages">Warning codes to be treated as messages for the current project.</param>
 #endif
         public TaskHostConfiguration(
-            string runtime,
-            int nodeId,
-            string startupDirectory,
-            IDictionary<string, string> buildProcessEnvironment,
-            CultureInfo culture,
-            CultureInfo uiCulture,
+                string runtime,
+                int nodeId,
+                string startupDirectory,
+                IDictionary<string, string> buildProcessEnvironment,
+                CultureInfo culture,
+                CultureInfo uiCulture,
 #if FEATURE_APPDOMAIN
             AppDomainSetup appDomainSetup,
 #endif
@@ -186,6 +186,7 @@ namespace Microsoft.Build.BackEnd
                 }
             }
 
+            _runtime = runtime;
             _culture = culture;
             _uiCulture = uiCulture;
 #if FEATURE_APPDOMAIN

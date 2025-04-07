@@ -3,27 +3,25 @@
 
 using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#if FEATURE_PIPE_SECURITY
+using Microsoft.Build.BackEnd.Logging;
+
+#if NETFRAMEWORK
+using Microsoft.Build.Eventing;
 using System.Security.Principal;
 #endif
 
-#if FEATURE_APM
-using Microsoft.Build.Eventing;
-#endif
+using Microsoft.Build.Framework;
 using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
-using Task = System.Threading.Tasks.Task;
-using Microsoft.Build.Framework;
-using Microsoft.Build.BackEnd.Logging;
 
 #nullable disable
 
@@ -186,7 +184,7 @@ namespace Microsoft.Build.BackEnd
         /// Finds or creates a child processes which can act as a node.
         /// </summary>
         protected IList<NodeContext> GetNodes(
-            string msbuildExecutableLocation,
+            string msbuildLocation,
             string commandLineArgs,
             int nextNodeId,
             INodePacketFactory factory,
@@ -202,19 +200,19 @@ namespace Microsoft.Build.BackEnd
             }
 #endif
 
-            if (String.IsNullOrEmpty(msbuildExecutableLocation))
+            if (String.IsNullOrEmpty(msbuildLocation))
             {
-                msbuildExecutableLocation = _componentHost.BuildParameters.NodeExeLocation;
+                msbuildLocation = _componentHost.BuildParameters.NodeExeLocation;
             }
 
-            if (String.IsNullOrEmpty(msbuildExecutableLocation))
+            if (String.IsNullOrEmpty(msbuildLocation))
             {
                 string msbuildExeName = Environment.GetEnvironmentVariable("MSBUILD_EXE_NAME");
 
                 if (!String.IsNullOrEmpty(msbuildExeName))
                 {
                     // we assume that MSBUILD_EXE_NAME is, in fact, just the name.
-                    msbuildExecutableLocation = Path.Combine(msbuildExeName, ".exe");
+                    msbuildLocation = Path.Combine(msbuildExeName, ".exe");
                 }
             }
 
@@ -229,7 +227,7 @@ namespace Microsoft.Build.BackEnd
             if (_componentHost.BuildParameters.EnableNodeReuse)
             {
                 IList<Process> possibleRunningNodesList;
-                (expectedProcessName, possibleRunningNodesList) = GetPossibleRunningNodes(msbuildExecutableLocation);
+                (expectedProcessName, possibleRunningNodesList) = GetPossibleRunningNodes(msbuildLocation);
                 possibleRunningNodes = new ConcurrentQueue<Process>(possibleRunningNodesList);
 
                 if (possibleRunningNodesList.Count > 0)
@@ -321,13 +319,13 @@ namespace Microsoft.Build.BackEnd
                     // It's also a waste of time when we attempt several times to launch multiple MSBuildTaskHost.exe (CLR2 TaskHost)
                     // nodes because we should never be able to connect in this case.
                     string taskHostNameForClr2TaskHost = Path.GetFileNameWithoutExtension(NodeProviderOutOfProcTaskHost.TaskHostNameForClr2TaskHost);
-                    if (Path.GetFileNameWithoutExtension(msbuildExecutableLocation).Equals(taskHostNameForClr2TaskHost, StringComparison.OrdinalIgnoreCase))
+                    if (Path.GetFileNameWithoutExtension(msbuildLocation).Equals(taskHostNameForClr2TaskHost, StringComparison.OrdinalIgnoreCase))
                     {
                         if (FrameworkLocationHelper.GetPathToDotNetFrameworkV35(DotNetFrameworkArchitecture.Current) == null)
                         {
                             CommunicationsUtilities.Trace(
                                 "Failed to launch node from {0}. The required .NET Framework v3.5 is not installed or enabled. CommandLine: {1}",
-                                msbuildExecutableLocation,
+                                msbuildLocation,
                                 commandLineArgs);
 
                             string nodeFailedToLaunchError = ResourceUtilities.GetResourceString("TaskHostNodeFailedToLaunchErrorCodeNet35NotInstalled");
@@ -337,7 +335,7 @@ namespace Microsoft.Build.BackEnd
 #endif
                     // Create the node process
                     INodeLauncher nodeLauncher = (INodeLauncher)_componentHost.GetComponent(BuildComponentType.NodeLauncher);
-                    Process msbuildProcess = nodeLauncher.Start(msbuildExecutableLocation, commandLineArgs, nodeId);
+                    Process msbuildProcess = nodeLauncher.Start(msbuildLocation, commandLineArgs, nodeId);
 
                     _processesToIgnore.TryAdd(GetProcessesToIgnoreKey(hostHandshake, msbuildProcess.Id), default);
 
@@ -418,7 +416,11 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private string GetProcessesToIgnoreKey(Handshake hostHandshake, int nodeProcessId)
         {
-            return hostHandshake.ToString() + "|" + nodeProcessId.ToString(CultureInfo.InvariantCulture);
+#if NET
+            return string.Create(CultureInfo.InvariantCulture, $"{hostHandshake}|{nodeProcessId}");
+#else
+            return $"{hostHandshake}|{nodeProcessId.ToString(CultureInfo.InvariantCulture)}";
+#endif
         }
 
 #if !FEATURE_PIPEOPTIONS_CURRENTUSERONLY
@@ -842,8 +844,17 @@ namespace Microsoft.Build.BackEnd
                 {
                     // Wait up to 100ms until all remaining packets are sent.
                     // We don't need to wait long, just long enough for the Task to start running on the ThreadPool.
-                    await Task.WhenAny(_packetWriteDrainTask, Task.Delay(100));
+#if NET
+                    await _packetWriteDrainTask.WaitAsync(TimeSpan.FromMilliseconds(100)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+#else
+                    using (var cts = new CancellationTokenSource(100))
+                    {
+                        await Task.WhenAny(_packetWriteDrainTask, Task.Delay(100, cts.Token));
+                        cts.Cancel();
+                    }
+#endif
                 }
+
                 if (_exitPacketState == ExitPacketState.ExitPacketSent)
                 {
                     CommunicationsUtilities.Trace("Waiting for node with pid = {0} to exit", _process.Id);

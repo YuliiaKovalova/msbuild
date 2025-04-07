@@ -9,16 +9,18 @@ using Microsoft.Build.Shared.Concurrent;
 #else
 using System.Collections.Concurrent;
 #endif
-using System.IO;
-using System.IO.Pipes;
 using System.Threading;
 using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
+using System.IO.Pipes;
+using System.IO;
+
 #if FEATURE_SECURITY_PERMISSIONS || FEATURE_PIPE_SECURITY
 using System.Security.AccessControl;
 #endif
 #if FEATURE_PIPE_SECURITY && FEATURE_NAMED_PIPE_SECURITY_CONSTRUCTOR
 using System.Security.Principal;
+
 #endif
 #if NET451_OR_GREATER || NETCOREAPP
 using System.Threading.Tasks;
@@ -116,6 +118,9 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private BinaryWriter _binaryWriter;
 
+        /// <summary>
+        /// The set of property names from handshake responsible for node version./>
+        /// </summary>
         private readonly IList<string> _versionHandshakeGroup = ["fileVersionMajor", "fileVersionMinor", "fileVersionBuild", "fileVersionPrivate"];
 
         #endregion
@@ -506,7 +511,7 @@ namespace Microsoft.Build.BackEnd
             {
                 if (localPipeServer.IsConnected)
                 {
-#if NETCOREAPP // OperatingSystem.IsWindows() is new in .NET 5.0
+#if NET // OperatingSystem.IsWindows() is new in .NET 5.0
                     if (OperatingSystem.IsWindows())
 #endif
                     {
@@ -534,7 +539,7 @@ namespace Microsoft.Build.BackEnd
 #if NET451_OR_GREATER
             Task<int> readTask = localReadPipe.ReadAsync(headerByte, 0, headerByte.Length, CancellationToken.None);
 #elif NETCOREAPP
-            Task<int> readTask = CommunicationsUtilities.ReadAsync(localReadPipe, headerByte, headerByte.Length);
+            Task<int> readTask = CommunicationsUtilities.ReadAsync(localReadPipe, headerByte, headerByte.Length).AsTask();
 #else
             IAsyncResult result = localReadPipe.BeginRead(headerByte, 0, headerByte.Length, null, null);
 #endif
@@ -636,7 +641,7 @@ namespace Microsoft.Build.BackEnd
 #if NET451_OR_GREATER
                             readTask = localReadPipe.ReadAsync(headerByte, 0, headerByte.Length, CancellationToken.None);
 #elif NETCOREAPP
-                            readTask = CommunicationsUtilities.ReadAsync(localReadPipe, headerByte, headerByte.Length);
+                            readTask = CommunicationsUtilities.ReadAsync(localReadPipe, headerByte, headerByte.Length).AsTask();
 #else
                             result = localReadPipe.BeginRead(headerByte, 0, headerByte.Length, null, null);
 #endif
@@ -707,8 +712,8 @@ namespace Microsoft.Build.BackEnd
             while (!exitLoop);
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }
