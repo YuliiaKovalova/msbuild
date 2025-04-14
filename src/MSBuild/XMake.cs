@@ -1111,36 +1111,37 @@ namespace Microsoft.Build.CommandLine
 
         private static ExitType OutputBuildInformationInJson(BuildResult result, string[] getProperty, string[] getItem, string[] getTargetResult, ILogger[] loggers, ExitType exitType, TextWriter outputStream)
         {
-            ProjectInstance builtProject = result.ProjectStateAfterBuild;
+            // TODO ask what should be printed
+            //ProjectInstance builtProject = result.ProjectStateAfterBuildHashToInstanceMap;
 
-            ILogger logger = loggers.FirstOrDefault(l => l is SimpleErrorLogger);
-            if (logger is not null)
-            {
-                exitType = exitType == ExitType.Success && (logger as SimpleErrorLogger).HasLoggedErrors ? ExitType.BuildError : exitType;
-            }
+            //ILogger logger = loggers.FirstOrDefault(l => l is SimpleErrorLogger);
+            //if (logger is not null)
+            //{
+            //    exitType = exitType == ExitType.Success && (logger as SimpleErrorLogger).HasLoggedErrors ? ExitType.BuildError : exitType;
+            //}
 
-            if (builtProject is null)
-            {
-                // Build failed; do not proceed
-                Console.Error.WriteLine(ResourceUtilities.FormatResourceStringStripCodeAndKeyword("BuildFailedWithPropertiesItemsOrTargetResultsRequested"));
-            }
-            // Special case if the user requests exactly one property: skip the json formatting
-            else if (getProperty.Length == 1 && getItem.Length == 0 && getTargetResult.Length == 0)
-            {
-                outputStream.WriteLine(builtProject.GetPropertyValue(getProperty[0]));
-            }
-            else
-            {
-                JsonOutputFormatter jsonOutputFormatter = new();
-                jsonOutputFormatter.AddPropertiesInJsonFormat(getProperty, property => builtProject.GetPropertyValue(property));
-                jsonOutputFormatter.AddItemInstancesInJsonFormat(getItem, builtProject);
-                jsonOutputFormatter.AddTargetResultsInJsonFormat(getTargetResult, result);
-                outputStream.WriteLine(jsonOutputFormatter.ToString());
-            }
+            //if (builtProject is null)
+            //{
+            //    // Build failed; do not proceed
+            //    Console.Error.WriteLine(ResourceUtilities.FormatResourceStringStripCodeAndKeyword("BuildFailedWithPropertiesItemsOrTargetResultsRequested"));
+            //}
+            //// Special case if the user requests exactly one property: skip the json formatting
+            //else if (getProperty.Length == 1 && getItem.Length == 0 && getTargetResult.Length == 0)
+            //{
+            //    outputStream.WriteLine(builtProject.GetPropertyValue(getProperty[0]));
+            //}
+            //else
+            //{
+            //    JsonOutputFormatter jsonOutputFormatter = new();
+            //    jsonOutputFormatter.AddPropertiesInJsonFormat(getProperty, property => builtProject.GetPropertyValue(property));
+            //    jsonOutputFormatter.AddItemInstancesInJsonFormat(getItem, builtProject);
+            //    jsonOutputFormatter.AddTargetResultsInJsonFormat(getTargetResult, result);
+            //    outputStream.WriteLine(jsonOutputFormatter.ToString());
+            //}
 
-            outputStream.Flush();
+            //outputStream.Flush();
 
-            return exitType;
+            return ExitType.Success;
         }
 
         /// <summary>

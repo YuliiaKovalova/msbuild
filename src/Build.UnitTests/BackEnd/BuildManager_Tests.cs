@@ -515,31 +515,31 @@ namespace Microsoft.Build.UnitTests.BackEnd
 
             result.OverallResult.ShouldBe(BuildResultCode.Success);
 
-            result.ProjectStateAfterBuild.ShouldNotBeNull();
+            result.ProjectStateAfterBuildHashToInstanceMap.ShouldNotBeNull();
 
-            result.ProjectStateAfterBuild.Properties.ShouldNotContain(p => p.Name == "UnrequestedProperty");
+            result.ProjectStateAfterBuildHashToInstanceMap.Properties.ShouldNotContain(p => p.Name == "UnrequestedProperty");
 
-            result.ProjectStateAfterBuild.Properties.ShouldContain(p => p.Name == "NewProperty");
-            result.ProjectStateAfterBuild.GetPropertyValue("NewProperty").ShouldBe("FunValue");
+            result.ProjectStateAfterBuildHashToInstanceMap.Properties.ShouldContain(p => p.Name == "NewProperty");
+            result.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("NewProperty").ShouldBe("FunValue");
 
-            result.ProjectStateAfterBuild.Properties.ShouldContain(p => p.Name == "RequestedProperty");
-            result.ProjectStateAfterBuild.GetPropertyValue("RequestedProperty").ShouldBe("IsRequested");
+            result.ProjectStateAfterBuildHashToInstanceMap.Properties.ShouldContain(p => p.Name == "RequestedProperty");
+            result.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("RequestedProperty").ShouldBe("IsRequested");
 
-            result.ProjectStateAfterBuild.Items.Count.ShouldBe(4);
+            result.ProjectStateAfterBuildHashToInstanceMap.Items.Count.ShouldBe(4);
 
-            result.ProjectStateAfterBuild.GetItems("ItemWithMetadata").ShouldHaveSingleItem();
-            result.ProjectStateAfterBuild.GetItems("ItemWithMetadata").First().DirectMetadataCount.ShouldBe(1);
-            result.ProjectStateAfterBuild.GetItems("ItemWithMetadata").First().GetMetadataValue("Metadatum1")
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("ItemWithMetadata").ShouldHaveSingleItem();
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("ItemWithMetadata").First().DirectMetadataCount.ShouldBe(1);
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("ItemWithMetadata").First().GetMetadataValue("Metadatum1")
                 .ShouldBe("m1");
-            result.ProjectStateAfterBuild.GetItems("ItemWithMetadata").First().GetMetadataValue("Metadatum2")
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("ItemWithMetadata").First().GetMetadataValue("Metadatum2")
                 .ShouldBeNullOrEmpty();
 
-            result.ProjectStateAfterBuild.GetItems("AnItem").Count.ShouldBe(3);
-            result.ProjectStateAfterBuild.GetItems("AnItem").ShouldContain(p => p.EvaluatedInclude == "Item2");
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("AnItem").Count.ShouldBe(3);
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItems("AnItem").ShouldContain(p => p.EvaluatedInclude == "Item2");
 
-            result.ProjectStateAfterBuild.GetItemsByItemTypeAndEvaluatedInclude("AnItem", "Item1")
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItemsByItemTypeAndEvaluatedInclude("AnItem", "Item1")
                 .ShouldHaveSingleItem();
-            result.ProjectStateAfterBuild.GetItemsByItemTypeAndEvaluatedInclude("AnItem", "Item1").First()
+            result.ProjectStateAfterBuildHashToInstanceMap.GetItemsByItemTypeAndEvaluatedInclude("AnItem", "Item1").First()
                 .GetMetadataValue("UnexpectedMetadatum").ShouldBe("Unexpected");
         }
 

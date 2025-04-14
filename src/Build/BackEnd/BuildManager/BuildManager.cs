@@ -911,7 +911,10 @@ namespace Microsoft.Build.Execution
                 ErrorIfState(BuildManagerState.Idle, "NoBuildInProgress");
                 VerifyStateInternal(BuildManagerState.Building);
 
-                var newSubmission = requestData.CreateSubmission(this, GetNextSubmissionId(), requestData,
+                var newSubmission = requestData.CreateSubmission(
+                    this,
+                    GetNextSubmissionId(),
+                    requestData,
                     _buildParameters!.LegacyThreadingSemantics);
 
                 if (_buildTelemetry != null)

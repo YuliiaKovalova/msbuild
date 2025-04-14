@@ -190,18 +190,21 @@ namespace Microsoft.Build.BackEnd
 
             // Gather up outputs for the requested targets and return those.  All of our information should be in the base lookup now.
             ComputeAfterTargetFailures(targetNames);
-            BuildResult resultsToReport = new BuildResult(_buildResult, targetNames.Select(target => target.name).ToArray());
+            BuildResult resultsToReport = new BuildResult(_buildResult, [.. targetNames.Select(target => target.name)]);
 
             // Return after-build project state if requested.
             if (_requestEntry.Request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.ProvideProjectStateAfterBuild))
             {
-                resultsToReport.ProjectStateAfterBuild = _projectInstance;
+                resultsToReport.ProjectStateAfterBuildHashToInstanceMap ??= new Dictionary<string, ProjectInstance>();
+                var requestedProjectStateHash = _requestEntry.Request.RequestedProjectState.GetHashCode().ToString();
+                resultsToReport.ProjectStateAfterBuildHashToInstanceMap[requestedProjectStateHash] = _projectInstance;
             }
 
             if (_requestEntry.Request.RequestedProjectState != null)
             {
-                resultsToReport.ProjectStateAfterBuild =
-                    _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState);
+                resultsToReport.ProjectStateAfterBuildHashToInstanceMap ??= new Dictionary<string, ProjectInstance>();
+                var requestedProjectStateHash = _requestEntry.Request.RequestedProjectState.GetHashCode().ToString();
+                resultsToReport.ProjectStateAfterBuildHashToInstanceMap[requestedProjectStateHash] = _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState);
             }
 
             configuration.IsCacheable = previousCacheableStatus;

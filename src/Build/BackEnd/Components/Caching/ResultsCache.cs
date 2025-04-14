@@ -172,8 +172,7 @@ namespace Microsoft.Build.BackEnd
             {
                 if (_resultsByConfiguration.TryGetValue(request.ConfigurationId, out BuildResult allResults))
                 {
-                    bool buildDataFlagsSatisfied = ChangeWaves.AreFeaturesEnabled(ChangeWaves.Wave17_12)
-                        ? AreBuildResultFlagsCompatible(request, allResults) : true;
+                    bool buildDataFlagsSatisfied = ChangeWaves.AreFeaturesEnabled(ChangeWaves.Wave17_12) ? AreBuildResultFlagsCompatible(request, allResults) : true;
 
                     if (buildDataFlagsSatisfied)
                     {
@@ -379,15 +378,16 @@ namespace Microsoft.Build.BackEnd
                 {
                     return true;
                 }
+
                 if (!HasProvideSubsetOfStateAfterBuild(buildResultDataFlags))
                 {
                     return false;
                 }
 
                 // Verify that the requested subset is compatible with the result.
-                return buildRequest.RequestedProjectState is not null &&
-                    buildResult.ProjectStateAfterBuild?.RequestedProjectStateFilter is not null &&
-                    buildRequest.RequestedProjectState.IsSubsetOf(buildResult.ProjectStateAfterBuild.RequestedProjectStateFilter);
+                var requestedProjectStateHash = buildRequest.RequestedProjectState.GetHashCode();
+                return buildRequest.RequestedProjectState is not null
+                    && buildResult.ProjectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectStateHash);
             }
 
             return true;
@@ -399,14 +399,8 @@ namespace Microsoft.Build.BackEnd
                 => (flags & BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild) == BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild;
         }
 
-        public IEnumerator<BuildResult> GetEnumerator()
-        {
-            return _resultsByConfiguration.Values.GetEnumerator();
-        }
+        public IEnumerator<BuildResult> GetEnumerator() => _resultsByConfiguration.Values.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

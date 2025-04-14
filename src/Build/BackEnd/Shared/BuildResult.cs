@@ -133,7 +133,7 @@ namespace Microsoft.Build.Execution
         /// be used to retrieve <see cref="ProjectInstance.Properties"/>, <see cref="ProjectInstance.GlobalProperties"/> and
         /// <see cref="ProjectInstance.Items"/> from it. No other operation is guaranteed to be supported.
         /// </summary>
-        private ProjectInstance? _projectStateAfterBuild;
+        private IDictionary<string, ProjectInstance> _projectStateAfterBuildHashToInstanceMap;
 
         /// <summary>
         /// The flags provide additional control over the build results and may affect the cached value.
@@ -201,7 +201,7 @@ namespace Microsoft.Build.Execution
             _resultsByTarget = CreateTargetResultDictionaryWithContents(existingResults, targetNames);
             _baseOverallResult = existingResults.OverallResult == BuildResultCode.Success;
             _buildRequestDataFlags = existingResults._buildRequestDataFlags;
-            _projectStateAfterBuild = existingResults._projectStateAfterBuild;
+            _projectStateAfterBuildHashToInstanceMap = existingResults._projectStateAfterBuildHashToInstanceMap;
 
             _circularDependency = existingResults._circularDependency;
         }
@@ -246,7 +246,14 @@ namespace Microsoft.Build.Execution
                 _resultsByTarget = targetNames == null ? existingResults._resultsByTarget : CreateTargetResultDictionaryWithContents(existingResults, targetNames);
                 if (request.RequestedProjectState != null)
                 {
-                    _projectStateAfterBuild = existingResults._projectStateAfterBuild?.FilteredCopy(request.RequestedProjectState);
+                    var requestedProjectStateHash = request.RequestedProjectState.GetHashCode().ToString();
+                    // TODO what actually project instance is
+                    if (_projectStateAfterBuildHashToInstanceMap is not null && !_projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectStateHash))
+                    {
+                        _projectStateAfterBuildHashToInstanceMap.Add(requestedProjectStateHash, )
+                    }
+
+                    _projectStateAfterBuildHashToInstanceMap = existingResults._projectStateAfterBuildHashToInstanceMap?.FilteredCopy(request.RequestedProjectState);
                 }
             }
         }
@@ -409,10 +416,10 @@ namespace Microsoft.Build.Execution
         /// be used to retrieve <see cref="ProjectInstance.Properties"/>, <see cref="ProjectInstance.GlobalProperties"/> and
         /// <see cref="ProjectInstance.Items"/> from it. Any other operation is not guaranteed to be supported.
         /// </summary>
-        public ProjectInstance? ProjectStateAfterBuild
+        public IDictionary<string, ProjectInstance> ProjectStateAfterBuildHashToInstanceMap
         {
-            get => _projectStateAfterBuild;
-            set => _projectStateAfterBuild = value;
+            get => _projectStateAfterBuildHashToInstanceMap;
+            set => _projectStateAfterBuildHashToInstanceMap = value;
         }
 
         /// <summary>
@@ -574,7 +581,7 @@ namespace Microsoft.Build.Execution
                 return;
             }
 
-            // Merge in the results
+            // Merge in the target results
             foreach (KeyValuePair<string, TargetResult> targetResult in results._resultsByTarget ?? [])
             {
                 // NOTE: I believe that because we only allow results for a given target to be produced and cached once for a given configuration,
@@ -588,8 +595,32 @@ namespace Microsoft.Build.Execution
                 _resultsByTarget![targetResult.Key] = targetResult.Value;
             }
 
+            // Merge BuildRequestDataFlags
+            _buildRequestDataFlags = MergeFlags(BuildRequestDataFlags, results.BuildRequestDataFlags);
+
             // If there is an exception and we did not previously have one, add it in.
             _requestException ??= results.Exception;
+        }
+
+        /// <summary>
+        /// Merges two sets of BuildRequestDataFlags according to MSBuild's requirements.
+        /// </summary>
+        /// <param name="existingFlags">The existing flags in the cache.</param>
+        /// <param name="newFlags">The new flags to merge.</param>
+        /// <returns>The merged flags.</returns>
+        internal BuildRequestDataFlags MergeFlags(BuildRequestDataFlags? existingFlags, BuildRequestDataFlags? newFlags)
+        {
+            BuildRequestDataFlags mergedFlags = existingFlags ?? Execution.BuildRequestDataFlags.None | newFlags ?? Execution.BuildRequestDataFlags.None;
+
+            // If ProvideProjectStateAfterBuild is set in new flags, it takes precedence 
+            // over ProvideSubsetOfStateAfterBuild, regardless of existing flags
+            if ((newFlags & Execution.BuildRequestDataFlags.ProvideProjectStateAfterBuild) != 0)
+            {
+                // If new request wants full state, prioritize it by removing the subset flag
+                mergedFlags &= ~Execution.BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild;
+            }
+
+            return mergedFlags;
         }
 
         /// <summary>
@@ -631,7 +662,7 @@ namespace Microsoft.Build.Execution
             translator.TranslateException(ref _requestException);
             translator.TranslateDictionary(ref _resultsByTarget, TargetResult.FactoryForDeserialization, CreateTargetResultDictionary);
             translator.Translate(ref _baseOverallResult);
-            translator.Translate(ref _projectStateAfterBuild, ProjectInstance.FactoryForDeserialization);
+            translator.TranslateDictionary(ref _projectStateAfterBuildHashToInstanceMap, ProjectInstance.FactoryForDeserialization, CreateProjectStateAfterBuildDictionary);
             translator.Translate(ref _savedCurrentDirectory);
             translator.Translate(ref _schedulerInducedError);
 
@@ -695,10 +726,7 @@ namespace Microsoft.Build.Execution
         /// <summary>
         /// Factory for serialization
         /// </summary>
-        internal static BuildResult FactoryForDeserialization(ITranslator translator)
-        {
-            return new BuildResult(translator);
-        }
+        internal static BuildResult FactoryForDeserialization(ITranslator translator) => new BuildResult(translator);
 
         #endregion
 
@@ -750,18 +778,17 @@ namespace Microsoft.Build.Execution
         /// Sets the overall result.
         /// </summary>
         /// <param name="overallResult"><code>true</code> if the result is success, otherwise <code>false</code>.</param>
-        internal void SetOverallResult(bool overallResult)
-        {
-            _baseOverallResult = false;
-        }
+        internal void SetOverallResult(bool overallResult) => _baseOverallResult = false;
 
         /// <summary>
         /// Creates the target result dictionary.
         /// </summary>
-        private static ConcurrentDictionary<string, TargetResult> CreateTargetResultDictionary(int capacity)
-        {
-            return new ConcurrentDictionary<string, TargetResult>(1, capacity, StringComparer.OrdinalIgnoreCase);
-        }
+        private static ConcurrentDictionary<string, TargetResult> CreateTargetResultDictionary(int capacity) => new ConcurrentDictionary<string, TargetResult>(1, capacity, StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Creates the target result dictionary.
+        /// </summary>
+        private static Dictionary<string, ProjectInstance> CreateProjectStateAfterBuildDictionary(int capacity) => new Dictionary<string, ProjectInstance>(capacity);
 
         /// <summary>
         /// Creates the target result dictionary and populates it with however many target results are

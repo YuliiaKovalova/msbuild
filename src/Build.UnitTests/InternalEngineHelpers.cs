@@ -160,7 +160,7 @@ namespace Microsoft.Build.Unittest
                 actualBuildResult.CircularDependency.ShouldBe(expectedBuildResult.CircularDependency);
                 actualBuildResult.Exception.ShouldBe(expectedBuildResult.Exception);
                 actualBuildResult.OverallResult.ShouldBe(expectedBuildResult.OverallResult);
-                actualBuildResult.ProjectStateAfterBuild.ShouldBe(expectedBuildResult.ProjectStateAfterBuild);
+                actualBuildResult.ProjectStateAfterBuildHashToInstanceMap.ShouldBe(expectedBuildResult.ProjectStateAfterBuildHashToInstanceMap);
 
                 Helpers.AssertDictionariesEqual(
                     actualBuildResult.ResultsByTarget,
