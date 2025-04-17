@@ -133,6 +133,15 @@ namespace Microsoft.Build.Execution
         /// be used to retrieve <see cref="ProjectInstance.Properties"/>, <see cref="ProjectInstance.GlobalProperties"/> and
         /// <see cref="ProjectInstance.Items"/> from it. No other operation is guaranteed to be supported.
         /// </summary>
+        private ProjectInstance? _projectStateAfterBuild;
+
+        /// <summary>
+        /// A dictionary that maps project RequestedProjectState hash to their corresponding <see cref="ProjectInstance"/> objects.
+        /// </summary>
+        /// <remarks>
+        /// This mapping enables quick lookup of project state by hash value, allowing the build system
+        /// to retrieve or reference project instances for further operations or analysis.
+        /// </remarks>
         private IDictionary<string, ProjectInstance> _projectStateAfterBuildHashToInstanceMap;
 
         /// <summary>
@@ -244,16 +253,23 @@ namespace Microsoft.Build.Execution
             {
                 _requestException = exception ?? existingResults._requestException;
                 _resultsByTarget = targetNames == null ? existingResults._resultsByTarget : CreateTargetResultDictionaryWithContents(existingResults, targetNames);
-                if (request.RequestedProjectState != null)
+
+                // If we are here, we assume the existing results at least contain the Project(full) state that can be filtered.
+                if (request.RequestedProjectState != null && existingResults._projectStateAfterBuildHashToInstanceMap != null)
                 {
-                    var requestedProjectStateHash = request.RequestedProjectState.GetHashCode().ToString();
-                    // TODO what actually project instance is
-                    if (_projectStateAfterBuildHashToInstanceMap is not null && !_projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectStateHash))
+                    // Check if we already have the requested state in existing results cache.
+                    if (existingResults._projectStateAfterBuildHashToInstanceMap.TryGetValue(request.RequestedProjectState.GetHashCodeString(), out var subsetState))
                     {
-                        _projectStateAfterBuildHashToInstanceMap.Add(requestedProjectStateHash, )
+                        ProjectStateAfterBuild = subsetState;
                     }
 
-                    _projectStateAfterBuildHashToInstanceMap = existingResults._projectStateAfterBuildHashToInstanceMap?.FilteredCopy(request.RequestedProjectState);
+                    // The Project(full) state means that the hash key is constructed from RequestedProjectState object with EMPTY properties and items.
+                    string projectStateHash = new RequestedProjectState().GetHashCodeString();
+                    if (existingResults._projectStateAfterBuildHashToInstanceMap.TryGetValue(projectStateHash, out var projectState))
+                    {
+                        ProjectStateAfterBuild = projectState.FilteredCopy(request.RequestedProjectState);
+                        existingResults._projectStateAfterBuildHashToInstanceMap[projectStateHash] = ProjectStateAfterBuild;
+                    }
                 }
             }
         }
@@ -416,10 +432,10 @@ namespace Microsoft.Build.Execution
         /// be used to retrieve <see cref="ProjectInstance.Properties"/>, <see cref="ProjectInstance.GlobalProperties"/> and
         /// <see cref="ProjectInstance.Items"/> from it. Any other operation is not guaranteed to be supported.
         /// </summary>
-        public IDictionary<string, ProjectInstance> ProjectStateAfterBuildHashToInstanceMap
+        public ProjectInstance? ProjectStateAfterBuild
         {
-            get => _projectStateAfterBuildHashToInstanceMap;
-            set => _projectStateAfterBuildHashToInstanceMap = value;
+            get => _projectStateAfterBuild;
+            set => _projectStateAfterBuild = value;
         }
 
         /// <summary>
@@ -603,6 +619,13 @@ namespace Microsoft.Build.Execution
         }
 
         /// <summary>
+        /// Determines whether the build result contains a subset result for the specified project state.
+        /// </summary>
+        /// <param name="requestedProjectState">The project state to check for.</param>
+        /// <returns>true if a subset result exists for the requested project state; otherwise, false.</returns>
+        internal bool HasSubsetResult(RequestedProjectState requestedProjectState) => _projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectState.GetHashCodeString());
+
+        /// <summary>
         /// Merges two sets of BuildRequestDataFlags according to MSBuild's requirements.
         /// </summary>
         /// <param name="existingFlags">The existing flags in the cache.</param>
@@ -610,11 +633,12 @@ namespace Microsoft.Build.Execution
         /// <returns>The merged flags.</returns>
         internal BuildRequestDataFlags MergeFlags(BuildRequestDataFlags? existingFlags, BuildRequestDataFlags? newFlags)
         {
-            BuildRequestDataFlags mergedFlags = existingFlags ?? Execution.BuildRequestDataFlags.None | newFlags ?? Execution.BuildRequestDataFlags.None;
+            // Use None if the flag is null, then combine both flags
+            BuildRequestDataFlags mergedFlags = (existingFlags ?? Execution.BuildRequestDataFlags.None) | (newFlags ?? Execution.BuildRequestDataFlags.None);
 
             // If ProvideProjectStateAfterBuild is set in new flags, it takes precedence 
             // over ProvideSubsetOfStateAfterBuild, regardless of existing flags
-            if ((newFlags & Execution.BuildRequestDataFlags.ProvideProjectStateAfterBuild) != 0)
+            if (newFlags.HasValue && (newFlags.Value & Execution.BuildRequestDataFlags.ProvideProjectStateAfterBuild) != 0)
             {
                 // If new request wants full state, prioritize it by removing the subset flag
                 mergedFlags &= ~Execution.BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild;
@@ -661,8 +685,8 @@ namespace Microsoft.Build.Execution
             translator.Translate(ref _circularDependency);
             translator.TranslateException(ref _requestException);
             translator.TranslateDictionary(ref _resultsByTarget, TargetResult.FactoryForDeserialization, CreateTargetResultDictionary);
+            translator.Translate(ref _projectStateAfterBuild, ProjectInstance.FactoryForDeserialization);
             translator.Translate(ref _baseOverallResult);
-            translator.TranslateDictionary(ref _projectStateAfterBuildHashToInstanceMap, ProjectInstance.FactoryForDeserialization, CreateProjectStateAfterBuildDictionary);
             translator.Translate(ref _savedCurrentDirectory);
             translator.Translate(ref _schedulerInducedError);
 
@@ -716,10 +740,20 @@ namespace Microsoft.Build.Execution
                 }
             }
 
-            // Starting version 1 this _buildRequestDataFlags field is present.
+            // Starting version 1 these fields are present
             if (_version > 0)
             {
                 translator.TranslateEnum(ref _buildRequestDataFlags, (int)_buildRequestDataFlags);
+
+                translator.TranslateDictionary(ref _projectStateAfterBuildHashToInstanceMap, ProjectInstance.FactoryForDeserialization, CreateProjectStateAfterBuildDictionary);
+            }
+            else
+            {
+                // For older versions, ensure the dictionary is initialized
+                if (translator.Mode == TranslationDirection.ReadFromStream && _projectStateAfterBuildHashToInstanceMap == null)
+                {
+                    _projectStateAfterBuildHashToInstanceMap = CreateProjectStateAfterBuildDictionary(0);
+                }
             }
         }
 

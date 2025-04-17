@@ -353,7 +353,7 @@ namespace Microsoft.Build.BackEnd
                         if (!request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.IgnoreExistingProjectState))
                         {
                             var requestedProjectStateHash = request.RequestedProjectState.GetHashCode().ToString();
-                            resultToReport.ProjectStateAfterBuildHashToInstanceMap = new Dictionary<string, ProjectInstance>() { { requestedProjectStateHash, config.Project } };
+                            resultToReport.ProjectStateAfterBuild = config.Project;
                         }
 
                         TraceEngine("Request {0}({1}) (nr {2}) retrieved results for configuration {3} from node {4} for transfer.", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.ConfigurationId, _componentHost.BuildParameters.NodeId);
@@ -439,8 +439,7 @@ namespace Microsoft.Build.BackEnd
                             config.RetrieveFromCache();
                             config.SavedEnvironmentVariables = ((IBuildResults)result).SavedEnvironmentVariables;
                             config.SavedCurrentDirectory = ((IBuildResults)result).SavedCurrentDirectory;
-                            // TODO
-                            config.ApplyTransferredState(result.ProjectStateAfterBuildHashToInstanceMap);
+                            config.ApplyTransferredState(result.ProjectStateAfterBuild);
 
                             // Don't need them anymore on the result since they were just piggybacking to get across the wire.
                             ((IBuildResults)result).SavedEnvironmentVariables = null;

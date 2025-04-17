@@ -170,22 +170,24 @@ namespace Microsoft.Build.BackEnd
 
             lock (_resultsByConfiguration)
             {
-                if (_resultsByConfiguration.TryGetValue(request.ConfigurationId, out BuildResult allResults))
+                if (_resultsByConfiguration.TryGetValue(request.ConfigurationId, out BuildResult cacheResult))
                 {
-                    bool buildDataFlagsSatisfied = ChangeWaves.AreFeaturesEnabled(ChangeWaves.Wave17_12) ? AreBuildResultFlagsCompatible(request, allResults) : true;
+                    bool buildDataFlagsSatisfied = ChangeWaves.AreFeaturesEnabled(ChangeWaves.Wave17_12)
+                    ? AreBuildResultFlagsCompatible(request, cacheResult)
+                    : true;
 
                     if (buildDataFlagsSatisfied)
                     {
                         // Check for targets explicitly specified.
-                        bool explicitTargetsSatisfied = CheckResults(allResults, request.Targets, checkTargetsMissingResults: true, skippedResultsDoNotCauseCacheMiss);
+                        bool explicitTargetsSatisfied = CheckResults(cacheResult, request.Targets, checkTargetsMissingResults: true, skippedResultsDoNotCauseCacheMiss);
 
                         if (explicitTargetsSatisfied)
                         {
                             // All of the explicit targets, if any, have been satisfied
                             response.Type = ResultsCacheResponseType.Satisfied;
 
-                            // Check for the initial targets.  If we don't know what the initial targets are, we assume they are not satisfied.
-                            if (configInitialTargets == null || !CheckResults(allResults, configInitialTargets, checkTargetsMissingResults: false, skippedResultsDoNotCauseCacheMiss))
+                            // Check for the initial targets. If we don't know what the initial targets are, we assume they are not satisfied.
+                            if (configInitialTargets == null || !CheckResults(cacheResult, configInitialTargets, checkTargetsMissingResults: false, skippedResultsDoNotCauseCacheMiss))
                             {
                                 response.Type = ResultsCacheResponseType.NotSatisfied;
                             }
@@ -195,7 +197,7 @@ namespace Microsoft.Build.BackEnd
                             {
                                 // Check for the default target, if necessary.  If we don't know what the default targets are, we
                                 // assume they are not satisfied.
-                                if (configDefaultTargets == null || !CheckResults(allResults, configDefaultTargets, checkTargetsMissingResults: false, skippedResultsDoNotCauseCacheMiss))
+                                if (configDefaultTargets == null || !CheckResults(cacheResult, configDefaultTargets, checkTargetsMissingResults: false, skippedResultsDoNotCauseCacheMiss))
                                 {
                                     response.Type = ResultsCacheResponseType.NotSatisfied;
                                 }
@@ -204,7 +206,7 @@ namespace Microsoft.Build.BackEnd
                             // Now report those results requested, if they are satisfied.
                             if (response.Type == ResultsCacheResponseType.Satisfied)
                             {
-                                List<string> targetsToAddResultsFor = new List<string>(configInitialTargets);
+                                List<string> targetsToAddResultsFor = [.. configInitialTargets];
 
                                 // Now report either the explicit targets or the default targets
                                 if (request.Targets.Count > 0)
@@ -216,7 +218,7 @@ namespace Microsoft.Build.BackEnd
                                     targetsToAddResultsFor.AddRange(configDefaultTargets);
                                 }
 
-                                response.Results = new BuildResult(request, allResults, targetsToAddResultsFor.ToArray(), null);
+                                response.Results = new BuildResult(request, cacheResult, targetsToAddResultsFor.ToArray(), null);
                             }
                         }
                     }
@@ -317,7 +319,8 @@ namespace Microsoft.Build.BackEnd
             bool missingTargetFound = false;
             foreach (string target in targets)
             {
-                if (!result.TryGetResultsForTarget(target, out TargetResult targetResult) || (targetResult.ResultCode == TargetResultCode.Skipped && !skippedResultsAreOK))
+                if (!result.TryGetResultsForTarget(target, out TargetResult targetResult)
+                || (targetResult.ResultCode == TargetResultCode.Skipped && !skippedResultsAreOK))
                 {
                     if (checkTargetsMissingResults)
                     {
@@ -356,47 +359,39 @@ namespace Microsoft.Build.BackEnd
                 return true;
             }
 
-            BuildRequestDataFlags buildRequestDataFlags = buildRequest.BuildRequestDataFlags;
-            BuildRequestDataFlags buildResultDataFlags = (BuildRequestDataFlags)buildResult.BuildRequestDataFlags;
+            var requestDataFlags = buildRequest.BuildRequestDataFlags;
+            var resultDataFlags = (BuildRequestDataFlags)buildResult.BuildRequestDataFlags;
 
-            if ((buildRequestDataFlags & FlagsAffectingBuildResults) != (buildResultDataFlags & FlagsAffectingBuildResults))
+            // Check if flags affecting build results match
+            if ((requestDataFlags & FlagsAffectingBuildResults) != (resultDataFlags & FlagsAffectingBuildResults))
             {
-                // Mismatch in flags that can affect build results -> not compatible.
                 return false;
             }
 
-            if (HasProvideProjectStateAfterBuild(buildRequestDataFlags))
+            // Check for PROJECT(full) state compatibility
+            if (HasFlag(requestDataFlags, BuildRequestDataFlags.ProvideProjectStateAfterBuild))
             {
-                // If full state is requested, we must have full state in the result.
-                return HasProvideProjectStateAfterBuild(buildResultDataFlags);
+                return HasFlag(resultDataFlags, BuildRequestDataFlags.ProvideProjectStateAfterBuild);
             }
 
-            if (HasProvideSubsetOfStateAfterBuild(buildRequestDataFlags))
+            // Check for SUBSET project state compatibility
+            if (HasFlag(requestDataFlags, BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild))
             {
-                // If partial state is requested, we must have full or partial-and-compatible state in the result.
-                if (HasProvideProjectStateAfterBuild(buildResultDataFlags))
+                // If SUBSET state is requested, we must have PROJECT (full) or compatible SUBSET state in the result.
+                // For the PROJECT(full) state we filter it in BuildResult constructor by using FilteredCopy method invocation.
+                if (HasFlag(resultDataFlags, BuildRequestDataFlags.ProvideProjectStateAfterBuild))
                 {
                     return true;
                 }
 
-                if (!HasProvideSubsetOfStateAfterBuild(buildResultDataFlags))
-                {
-                    return false;
-                }
-
-                // Verify that the requested subset is compatible with the result.
-                var requestedProjectStateHash = buildRequest.RequestedProjectState.GetHashCode();
-                return buildRequest.RequestedProjectState is not null
-                    && buildResult.ProjectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectStateHash);
+                // Verify SUBSET state compatibility
+                return buildResult.HasSubsetResult(buildRequest.RequestedProjectState);
             }
 
             return true;
 
-            static bool HasProvideProjectStateAfterBuild(BuildRequestDataFlags flags)
-                => (flags & BuildRequestDataFlags.ProvideProjectStateAfterBuild) == BuildRequestDataFlags.ProvideProjectStateAfterBuild;
-
-            static bool HasProvideSubsetOfStateAfterBuild(BuildRequestDataFlags flags)
-                => (flags & BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild) == BuildRequestDataFlags.ProvideSubsetOfStateAfterBuild;
+            static bool HasFlag(BuildRequestDataFlags flags, BuildRequestDataFlags flagToCheck)
+                => (flags & flagToCheck) == flagToCheck;
         }
 
         public IEnumerator<BuildResult> GetEnumerator() => _resultsByConfiguration.Values.GetEnumerator();

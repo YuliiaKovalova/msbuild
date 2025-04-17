@@ -15,6 +15,7 @@ namespace Microsoft.Build.Execution
     /// </summary>
     public class RequestedProjectState : ITranslatable, IEquatable<RequestedProjectState>
     {
+        private string _cachedHashCodeString;
         private List<string> _propertyFilters;
         private IDictionary<string, List<string>> _itemFilters;
 
@@ -73,6 +74,54 @@ namespace Microsoft.Build.Execution
             bool propertyFiltersEqual = ComparePropertyFilters(other);
             return !propertyFiltersEqual ? false : CompareItemFilters(other);
         }
+
+        /// <summary>
+        /// Returns the hash code as a string, cached for performance.
+        /// </summary>
+        /// <returns>A string representation of the hash code.</returns>
+        public string GetHashCodeString() => _cachedHashCodeString ??= GetHashCode().ToString();
+
+        /// <summary>
+        /// Returns the hash code for this instance.
+        /// </summary>
+        /// <returns>A 32-bit signed integer hash code.</returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = 17;
+
+                if (PropertyFilters != null)
+                {
+                    // Sort keys for consistent hash code
+                    foreach (string property in PropertyFilters.OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
+                    {
+                        hashCode = (hashCode * 31) + (property?.GetHashCode() ?? 0);
+                    }
+                }
+
+                if (ItemFilters != null)
+                {
+                    // Sort keys for consistent hash code
+                    foreach (string key in ItemFilters.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+                    {
+                        hashCode = hashCode * 31 + key.GetHashCode();
+
+                        List<string> metadataList = ItemFilters[key];
+                        if (metadataList != null)
+                        {
+                            foreach (string metadata in metadataList.OrderBy(m => m, StringComparer.OrdinalIgnoreCase))
+                            {
+                                hashCode = (hashCode * 31) + (metadata?.GetHashCode() ?? 0);
+                            }
+                        }
+                    }
+                }
+
+                return hashCode;
+            }
+        }
+
 
         private bool ComparePropertyFilters(RequestedProjectState other)
         {
@@ -133,47 +182,6 @@ namespace Microsoft.Build.Execution
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Returns the hash code for this instance.
-        /// </summary>
-        /// <returns>A 32-bit signed integer hash code.</returns>
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = 17;
-
-                if (PropertyFilters != null)
-                {
-                    // Sort keys for consistent hash code
-                    foreach (string property in PropertyFilters.OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
-                    {
-                        hashCode = (hashCode * 31) + (property?.GetHashCode() ?? 0);
-                    }
-                }
-
-                if (ItemFilters != null)
-                {
-                    // Sort keys for consistent hash code
-                    foreach (string key in ItemFilters.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
-                    {
-                        hashCode = hashCode * 31 + key.GetHashCode();
-
-                        List<string> metadataList = ItemFilters[key];
-                        if (metadataList != null)
-                        {
-                            foreach (string metadata in metadataList.OrderBy(m => m, StringComparer.OrdinalIgnoreCase))
-                            {
-                                hashCode = (hashCode * 31) + (metadata?.GetHashCode() ?? 0);
-                            }
-                        }
-                    }
-                }
-
-                return hashCode;
-            }
         }
 
         /// <summary>
