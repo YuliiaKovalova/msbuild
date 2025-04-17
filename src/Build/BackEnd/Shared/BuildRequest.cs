@@ -81,7 +81,7 @@ namespace Microsoft.Build.BackEnd
         private BuildEventContext _buildEventContext;
 
         /// <summary>
-        /// Whether or not the <see cref="BuildResult"/> issued in response to this request should include <see cref="BuildResult.ProjectStateAfterBuildHashToInstanceMap"/>.
+        /// Whether or not the <see cref="BuildResult"/> issued in response to this request should include <see cref="BuildResult.ProjectStateAfterBuild"/>.
         /// </summary>
         private BuildRequestDataFlags _buildRequestDataFlags;
 

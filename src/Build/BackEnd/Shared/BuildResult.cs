@@ -162,6 +162,7 @@ namespace Microsoft.Build.Execution
         public BuildResult()
         {
             _resultsByTarget = CreateTargetResultDictionary(1);
+            _projectStateAfterBuildHashToInstanceMap = CreateProjectStateAfterBuildDictionary(1);
         }
 
         /// <summary>
@@ -248,6 +249,7 @@ namespace Microsoft.Build.Execution
             {
                 _requestException = exception;
                 _resultsByTarget = CreateTargetResultDictionary(0);
+                _projectStateAfterBuildHashToInstanceMap = CreateProjectStateAfterBuildDictionary(0);
             }
             else
             {
@@ -271,6 +273,8 @@ namespace Microsoft.Build.Execution
                         existingResults._projectStateAfterBuildHashToInstanceMap[projectStateHash] = ProjectStateAfterBuild;
                     }
                 }
+
+                _projectStateAfterBuildHashToInstanceMap = CreateProjectStateAfterBuildDictionary(0);
             }
         }
 
@@ -290,6 +294,7 @@ namespace Microsoft.Build.Execution
             _defaultTargets = result._defaultTargets;
             _projectTargets = result._projectTargets;
             _baseOverallResult = result.OverallResult == BuildResultCode.Success;
+            _projectStateAfterBuildHashToInstanceMap = result._projectStateAfterBuildHashToInstanceMap;
         }
 
         internal BuildResult(BuildResult result, int submissionId, int configurationId, int requestId, int parentRequestId, int nodeRequestId)
@@ -307,6 +312,7 @@ namespace Microsoft.Build.Execution
             _defaultTargets = result._defaultTargets;
             _projectTargets = result._projectTargets;
             _baseOverallResult = result.OverallResult == BuildResultCode.Success;
+            _projectStateAfterBuildHashToInstanceMap = result._projectStateAfterBuildHashToInstanceMap;
         }
 
         /// <summary>
@@ -316,6 +322,7 @@ namespace Microsoft.Build.Execution
         {
             ((ITranslatable)this).Translate(translator);
             _resultsByTarget ??= CreateTargetResultDictionary(1);
+            _projectStateAfterBuildHashToInstanceMap = CreateProjectStateAfterBuildDictionary(1);
         }
 
         /// <summary>
@@ -822,7 +829,7 @@ namespace Microsoft.Build.Execution
         /// <summary>
         /// Creates the target result dictionary.
         /// </summary>
-        private static Dictionary<string, ProjectInstance> CreateProjectStateAfterBuildDictionary(int capacity) => new Dictionary<string, ProjectInstance>(capacity);
+        private static Dictionary<string, ProjectInstance> CreateProjectStateAfterBuildDictionary(int capacity) => new(capacity);
 
         /// <summary>
         /// Creates the target result dictionary and populates it with however many target results are

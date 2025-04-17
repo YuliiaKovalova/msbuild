@@ -308,7 +308,7 @@ namespace Microsoft.Build.UnitTests.BackEnd
               </Project>
             ");
             using XmlReader xmlReader = XmlReader.Create(textReader);
-            resultForRequestWithSubsetFlag1.ProjectStateAfterBuildHashToInstanceMap = new ProjectInstance(ProjectRootElement.Create(xmlReader)).FilteredCopy(requestedProjectState1);
+            resultForRequestWithSubsetFlag1.ProjectStateAfterBuild = new ProjectInstance(ProjectRootElement.Create(xmlReader)).FilteredCopy(requestedProjectState1);
 
             ResultsCache cache = new();
             cache.AddResult(resultForRequestWithSubsetFlag1);
@@ -327,13 +327,13 @@ namespace Microsoft.Build.UnitTests.BackEnd
 
             // We used the same filter that was used for the ProjectInstance in the cache -> cache hit.
             Assert.Equal(ResultsCacheResponseType.Satisfied, cachedResponseWithSubsetFlag1.Type);
-            Assert.Equal("Value1", cachedResponseWithSubsetFlag1.Results.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("property1"));
-            Assert.Equal("Value2", cachedResponseWithSubsetFlag1.Results.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("property2"));
+            Assert.Equal("Value1", cachedResponseWithSubsetFlag1.Results.ProjectStateAfterBuild.GetPropertyValue("property1"));
+            Assert.Equal("Value2", cachedResponseWithSubsetFlag1.Results.ProjectStateAfterBuild.GetPropertyValue("property2"));
 
             // We used a filter that's a subset of the one used for the ProjectInstance in the cache -> cache hit.
             Assert.Equal(ResultsCacheResponseType.Satisfied, cachedResponseWithSubsetFlag2.Type);
-            Assert.Equal("Value1", cachedResponseWithSubsetFlag2.Results.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("property1"));
-            Assert.Equal("", cachedResponseWithSubsetFlag2.Results.ProjectStateAfterBuildHashToInstanceMap.GetPropertyValue("property2"));
+            Assert.Equal("Value1", cachedResponseWithSubsetFlag2.Results.ProjectStateAfterBuild.GetPropertyValue("property1"));
+            Assert.Equal("", cachedResponseWithSubsetFlag2.Results.ProjectStateAfterBuild.GetPropertyValue("property2"));
         }
 
         [Fact]

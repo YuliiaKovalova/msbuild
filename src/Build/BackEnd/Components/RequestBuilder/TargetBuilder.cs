@@ -153,8 +153,7 @@ namespace Microsoft.Build.BackEnd
                 var targetExists = _projectInstance.Targets.TryGetValue(targetName.name, out ProjectTargetInstance targetInstance);
                 if (!targetExists && entry.Request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.SkipNonexistentTargets))
                 {
-                    _projectLoggingContext.LogComment(Framework.MessageImportance.Low,
-                        "TargetSkippedWhenSkipNonexistentTargets", targetName.name);
+                    _projectLoggingContext.LogComment(Framework.MessageImportance.Low, "TargetSkippedWhenSkipNonexistentTargets", targetName.name);
                 }
                 else
                 {
@@ -195,16 +194,12 @@ namespace Microsoft.Build.BackEnd
             // Return after-build project state if requested.
             if (_requestEntry.Request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.ProvideProjectStateAfterBuild))
             {
-                resultsToReport.ProjectStateAfterBuildHashToInstanceMap ??= new Dictionary<string, ProjectInstance>();
-                var requestedProjectStateHash = _requestEntry.Request.RequestedProjectState.GetHashCode().ToString();
-                resultsToReport.ProjectStateAfterBuildHashToInstanceMap[requestedProjectStateHash] = _projectInstance;
+                resultsToReport.ProjectStateAfterBuild = _projectInstance;
             }
 
             if (_requestEntry.Request.RequestedProjectState != null)
             {
-                resultsToReport.ProjectStateAfterBuildHashToInstanceMap ??= new Dictionary<string, ProjectInstance>();
-                var requestedProjectStateHash = _requestEntry.Request.RequestedProjectState.GetHashCode().ToString();
-                resultsToReport.ProjectStateAfterBuildHashToInstanceMap[requestedProjectStateHash] = _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState);
+                resultsToReport.ProjectStateAfterBuild = _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState);
             }
 
             configuration.IsCacheable = previousCacheableStatus;
