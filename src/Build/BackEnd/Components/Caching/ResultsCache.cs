@@ -173,8 +173,8 @@ namespace Microsoft.Build.BackEnd
                 if (_resultsByConfiguration.TryGetValue(request.ConfigurationId, out BuildResult cacheResult))
                 {
                     bool buildDataFlagsSatisfied = ChangeWaves.AreFeaturesEnabled(ChangeWaves.Wave17_12)
-                    ? AreBuildResultFlagsCompatible(request, cacheResult)
-                    : true;
+                        ? AreBuildResultFlagsCompatible(request, cacheResult)
+                        : true;
 
                     if (buildDataFlagsSatisfied)
                     {

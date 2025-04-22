@@ -435,17 +435,6 @@ namespace Microsoft.Build.Execution
         }
 
         /// <summary>
-        /// <see cref="ProjectInstance"/> state after the build. In general, it may be a non buildable-dummy object, and should only
-        /// be used to retrieve <see cref="ProjectInstance.Properties"/>, <see cref="ProjectInstance.GlobalProperties"/> and
-        /// <see cref="ProjectInstance.Items"/> from it. Any other operation is not guaranteed to be supported.
-        /// </summary>
-        public ProjectInstance? ProjectStateAfterBuild
-        {
-            get => _projectStateAfterBuild;
-            set => _projectStateAfterBuild = value;
-        }
-
-        /// <summary>
         /// Gets the flags that were used in the build request to which these results are associated.
         /// See <see cref="Execution.BuildRequestDataFlags"/> for examples of the available flags.
         /// </summary>
@@ -618,6 +607,15 @@ namespace Microsoft.Build.Execution
                 _resultsByTarget![targetResult.Key] = targetResult.Value;
             }
 
+            // Merge project state after build hash to instance map
+            if (results._projectStateAfterBuildHashToInstanceMap != null && results._projectStateAfterBuildHashToInstanceMap.Count > 0)
+            {
+                foreach (var entry in results._projectStateAfterBuildHashToInstanceMap)
+                {
+                    _projectStateAfterBuildHashToInstanceMap[entry.Key] = entry.Value;
+                }
+            }
+
             // Merge BuildRequestDataFlags
             _buildRequestDataFlags = MergeFlags(BuildRequestDataFlags, results.BuildRequestDataFlags);
 
@@ -630,7 +628,54 @@ namespace Microsoft.Build.Execution
         /// </summary>
         /// <param name="requestedProjectState">The project state to check for.</param>
         /// <returns>true if a subset result exists for the requested project state; otherwise, false.</returns>
-        internal bool HasSubsetResult(RequestedProjectState requestedProjectState) => _projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedProjectState.GetHashCodeString());
+        internal bool HasSubsetResult(RequestedProjectState? requestedProjectState)
+        {
+            if (requestedProjectState == null || _projectStateAfterBuildHashToInstanceMap == null)
+            {
+                return false;
+            }
+
+            // First check for exact hash match - fastest path
+            string requestedStateHash = requestedProjectState.GetHashCodeString();
+            if (_projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedStateHash))
+            {
+                return true;
+            }
+
+            // Check if in the cache we have the full project state. From it we can get any subset state.
+            string fullProjectStateHash = new RequestedProjectState().GetHashCodeString();
+            if (_projectStateAfterBuildHashToInstanceMap.ContainsKey(fullProjectStateHash))
+            {
+                return true;
+            }
+
+            // Use IsSubsetOf to check if the requested state is a subset of any cached state
+            foreach (var cachedStateKey in _projectStateAfterBuildHashToInstanceMap.Keys)
+            {
+                // Skip keys we've already checked
+                if (cachedStateKey == requestedStateHash || cachedStateKey == fullProjectStateHash)
+                {
+                    continue;
+                }
+
+                // Get the RequestedProjectState for this cached key
+                ProjectInstance cachedProjectState = _projectStateAfterBuildHashToInstanceMap[cachedStateKey];
+
+                if (requestedProjectState.IsSubsetOf(requestedProjectState))
+                {
+                    // Cache this relationship for faster lookup next time
+                    if (!_projectStateAfterBuildHashToInstanceMap.ContainsKey(requestedStateHash))
+                    {
+                        var filteredInstance = _projectStateAfterBuildHashToInstanceMap[cachedStateKey].FilteredCopy(requestedProjectState);
+                        _projectStateAfterBuildHashToInstanceMap[requestedStateHash] = filteredInstance;
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Merges two sets of BuildRequestDataFlags according to MSBuild's requirements.
@@ -830,6 +875,9 @@ namespace Microsoft.Build.Execution
         /// Creates the target result dictionary.
         /// </summary>
         private static Dictionary<string, ProjectInstance> CreateProjectStateAfterBuildDictionary(int capacity) => new(capacity);
+
+// Maybe checking for subset is enough here?
+        internal void AddProjectStateAfterBuildHashToInstanceMap(string key, ProjectInstance value) => _projectStateAfterBuildHashToInstanceMap[key] = value;
 
         /// <summary>
         /// Creates the target result dictionary and populates it with however many target results are

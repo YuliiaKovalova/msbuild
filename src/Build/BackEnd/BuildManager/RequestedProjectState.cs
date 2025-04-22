@@ -105,7 +105,7 @@ namespace Microsoft.Build.Execution
                     // Sort keys for consistent hash code
                     foreach (string key in ItemFilters.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
                     {
-                        hashCode = hashCode * 31 + key.GetHashCode();
+                        hashCode = (hashCode * 31) + key.GetHashCode();
 
                         List<string> metadataList = ItemFilters[key];
                         if (metadataList != null)
@@ -221,7 +221,7 @@ namespace Microsoft.Build.Execution
             }
             else if (another.PropertyFilters is not null)
             {
-                HashSet<string> anotherPropertyFilters = new HashSet<string>(another.PropertyFilters);
+                HashSet<string> anotherPropertyFilters = [.. another.PropertyFilters];
                 foreach (string propertyFilter in PropertyFilters)
                 {
                     if (!anotherPropertyFilters.Contains(propertyFilter))
@@ -258,7 +258,7 @@ namespace Microsoft.Build.Execution
                     }
                     else if (metadata is not null)
                     {
-                        HashSet<string> anotherMetadata = new HashSet<string>(metadata);
+                        HashSet<string> anotherMetadata = [.. metadata];
                         foreach (string metadatum in kvp.Value)
                         {
                             if (!anotherMetadata.Contains(metadatum))

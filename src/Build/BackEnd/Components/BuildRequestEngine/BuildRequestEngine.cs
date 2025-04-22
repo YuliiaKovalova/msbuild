@@ -352,8 +352,8 @@ namespace Microsoft.Build.BackEnd
                         ((IBuildResults)resultToReport).SavedEnvironmentVariables = config.SavedEnvironmentVariables;
                         if (!request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.IgnoreExistingProjectState))
                         {
-                            var requestedProjectStateHash = request.RequestedProjectState.GetHashCode().ToString();
-                            resultToReport.ProjectStateAfterBuild = config.Project;
+                            var projectStateHash = request.RequestedProjectState?.GetHashCodeString() ?? new RequestedProjectState().GetHashCodeString();
+                            resultToReport.AddProjectStateAfterBuildHashToInstanceMap(projectStateHash, config.Project);
                         }
 
                         TraceEngine("Request {0}({1}) (nr {2}) retrieved results for configuration {3} from node {4} for transfer.", request.GlobalRequestId, request.ConfigurationId, request.NodeRequestId, request.ConfigurationId, _componentHost.BuildParameters.NodeId);

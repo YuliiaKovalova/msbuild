@@ -191,15 +191,16 @@ namespace Microsoft.Build.BackEnd
             ComputeAfterTargetFailures(targetNames);
             BuildResult resultsToReport = new BuildResult(_buildResult, [.. targetNames.Select(target => target.name)]);
 
+            var projectStateHash = _requestEntry.Request.RequestedProjectState?.GetHashCodeString() ?? new RequestedProjectState().GetHashCodeString();
             // Return after-build project state if requested.
             if (_requestEntry.Request.BuildRequestDataFlags.HasFlag(BuildRequestDataFlags.ProvideProjectStateAfterBuild))
             {
-                resultsToReport.ProjectStateAfterBuild = _projectInstance;
+                resultsToReport.AddProjectStateAfterBuildHashToInstanceMap(projectStateHash, _projectInstance);
             }
 
             if (_requestEntry.Request.RequestedProjectState != null)
             {
-                resultsToReport.ProjectStateAfterBuild = _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState);
+                resultsToReport.AddProjectStateAfterBuildHashToInstanceMap(projectStateHash, _projectInstance.FilteredCopy(_requestEntry.Request.RequestedProjectState));
             }
 
             configuration.IsCacheable = previousCacheableStatus;
