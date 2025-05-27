@@ -15,11 +15,16 @@ using Microsoft.Build.Shared;
 using System.IO.Pipes;
 using System.IO;
 
+#if RUNTIME_TYPE_NETCORE
+using System.Collections.Immutable;
+#endif
+
 #if FEATURE_SECURITY_PERMISSIONS || FEATURE_PIPE_SECURITY
 using System.Security.AccessControl;
 #endif
 #if FEATURE_PIPE_SECURITY && FEATURE_NAMED_PIPE_SECURITY_CONSTRUCTOR
 using System.Security.Principal;
+
 
 #endif
 #if NET451_OR_GREATER || NETCOREAPP
@@ -118,12 +123,14 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private BinaryWriter _binaryWriter;
 
+#if RUNTIME_TYPE_NETCORE
         /// <summary>
-        /// The set of property names from handshake responsible for node version./>
+        /// The set of property names from handshake responsible for node version./>.
         /// </summary>
-        private readonly IList<string> _versionHandshakeGroup = ["fileVersionMajor", "fileVersionMinor", "fileVersionBuild", "fileVersionPrivate"];
+        private readonly ImmutableHashSet<string> _versionHandshakeGroup = ["fileVersionMajor", "fileVersionMinor", "fileVersionBuild", "fileVersionPrivate"];
+#endif
 
-        #endregion
+#endregion
 
         #region INodeEndpoint Events
 
@@ -412,7 +419,7 @@ namespace Microsoft.Build.BackEnd
 #endif
                             );
 #pragma warning restore SA1111, SA1009 // Closing parenthesis should be on line of last parameter
-
+#if RUNTIME_TYPE_NETCORE
                             if (handshakePart != handshakeComponents[i].Value)
                             {
                                 // NET Task host allows to connect to MSBuild.dll with the different handshake version.
@@ -427,8 +434,9 @@ namespace Microsoft.Build.BackEnd
                                     _pipeServer.WriteIntForHandshake(i + 1);
                                     gotValidConnection = false;
                                     break;
-                                } 
+                                }
                             }
+#endif
                         }
 
                         if (gotValidConnection)

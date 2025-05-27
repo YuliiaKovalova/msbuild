@@ -45,7 +45,7 @@ namespace Microsoft.Build.BackEnd
         /// <summary>
         /// Task host runtime.
         /// </summary>
-        private string _runtime;
+        private readonly string _runtime;
 
 #if FEATURE_APPDOMAIN
         /// <summary>
@@ -427,10 +427,10 @@ namespace Microsoft.Build.BackEnd
             translator.TranslateCulture(ref _uiCulture);
 #if FEATURE_APPDOMAIN
 
-            // Skip AppDomain configuration when targeting .NET Task Host (Runtime="Net").
+            // Skip AppDomain configuration when targeting .NET Task Host (Runtime="NET").
             // Although MSBuild.exe runs under .NET Framework and has AppDomain support,
             // we don't transmit AppDomain config when communicating with dotnet.exe (it is not supported in .NET 5+).
-            if (!string.Equals(_runtime, "Net", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(_runtime, "NET", StringComparison.OrdinalIgnoreCase))
             {
                 byte[] appDomainConfigBytes = null;
 

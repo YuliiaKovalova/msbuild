@@ -274,7 +274,16 @@ namespace Microsoft.Build.BackEnd
         public static byte CreateExtendedHeaderType(NodePacketType type) => (byte)((byte)type | ExtendedHeaderFlag);
 
         // Read extended header (returns version)
-        public static byte ReadVersion(Stream stream) => (byte)stream.ReadByte();
+        public static byte ReadVersion(Stream stream)
+        {
+            int value = stream.ReadByte();
+            if (value == -1)
+            {
+                throw new EndOfStreamException("Unexpected end of stream while reading version");
+            }
+
+            return (byte)value;
+        }
 
         // Write extended header with version
         public static void WriteVersion(Stream stream, byte version) => stream.WriteByte(version);

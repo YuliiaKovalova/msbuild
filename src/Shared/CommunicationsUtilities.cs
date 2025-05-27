@@ -83,7 +83,7 @@ namespace Microsoft.Build.Internal
 
     internal class Handshake
     {
-        public static int NetTaskHostHandshakeVersion = 99;
+        public const int NetTaskHostHandshakeVersion = 99;
 
         protected readonly int options;
         protected readonly int salt;
