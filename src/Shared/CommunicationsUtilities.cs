@@ -616,6 +616,7 @@ namespace Microsoft.Build.Internal
                 }
                 totalBytesRead += bytesRead;
             }
+
             return totalBytesRead;
         }
 #endif
