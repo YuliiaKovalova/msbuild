@@ -511,7 +511,7 @@ namespace Microsoft.Build.BackEnd
                 }
 
                 if (int.TryParse(lastDirectoryName.Substring(0, dotIndex), out int majorVersion)
-                    && (majorVersion < minimumSdkVersion) || lastDirectoryName.Contains("preview"))
+                    && ((majorVersion < minimumSdkVersion) || lastDirectoryName.Contains("preview")))
                 {
                     ErrorUtilities.ThrowInternalError($"SDK version {majorVersion} is below the minimum required version. {errorMessage}");
                 }
