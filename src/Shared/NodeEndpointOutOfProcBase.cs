@@ -624,13 +624,14 @@ namespace Microsoft.Build.BackEnd
                             byte rawType = headerByte[0];
 
                             bool hasExtendedHeader = PacketTypeExtensions.HasExtendedHeader(rawType);
-                            NodePacketType packetType = PacketTypeExtensions.HasExtendedHeader(rawType) ? PacketTypeExtensions.GetNodePacketType(rawType) : (NodePacketType)rawType;
 
                             byte version = 0;
                             if (hasExtendedHeader)
                             {
                                 version = PacketTypeExtensions.ReadVersion(localReadPipe);
                             }
+
+                            NodePacketType packetType = hasExtendedHeader ? PacketTypeExtensions.GetNodePacketType(rawType) : (NodePacketType)rawType;
 
                             try
                             {

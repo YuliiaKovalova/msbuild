@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
+using static Microsoft.Build.Shared.XMakeAttributes;
 
 #nullable disable
 
@@ -430,7 +432,7 @@ namespace Microsoft.Build.BackEnd
             // Skip AppDomain configuration when targeting .NET Task Host (Runtime="NET").
             // Although MSBuild.exe runs under .NET Framework and has AppDomain support,
             // we don't transmit AppDomain config when communicating with dotnet.exe (it is not supported in .NET 5+).
-            if (!string.Equals(_runtime, "NET", StringComparison.OrdinalIgnoreCase))
+            if(!StringComparer.OrdinalIgnoreCase.Equals(_runtime, MSBuildRuntimeValues.net))
             {
                 byte[] appDomainConfigBytes = null;
 
