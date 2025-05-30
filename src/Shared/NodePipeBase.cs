@@ -9,6 +9,7 @@ using Microsoft.Build.BackEnd;
 using Microsoft.Build.Framework;
 using System.Collections.Generic;
 
+
 #if !TASKHOST
 using System.Buffers.Binary;
 using System.Threading.Tasks;
