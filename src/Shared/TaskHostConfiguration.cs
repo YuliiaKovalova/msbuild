@@ -42,16 +42,16 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private CultureInfo _uiCulture = CultureInfo.CurrentUICulture;
 
-        /// <summary>
-        /// Task host runtime.
-        /// </summary>
-        private readonly string _runtime;
-
 #if FEATURE_APPDOMAIN
         /// <summary>
         /// The AppDomainSetup that we may want to use on AppDomainIsolated tasks.
         /// </summary>
         private AppDomainSetup _appDomainSetup;
+
+        /// <summary>
+        /// Task host runtime.
+        /// </summary>
+        private bool _isNetRuntime;
 #endif
 
         /// <summary>
@@ -186,11 +186,11 @@ namespace Microsoft.Build.BackEnd
                 }
             }
 
-            _runtime = runtime;
             _culture = culture;
             _uiCulture = uiCulture;
 #if FEATURE_APPDOMAIN
             _appDomainSetup = appDomainSetup;
+            _isNetRuntime = StringComparer.OrdinalIgnoreCase.Equals(runtime, XMakeAttributes.MSBuildRuntimeValues.net);
 #endif
             _lineNumberOfTask = lineNumberOfTask;
             _columnNumberOfTask = columnNumberOfTask;
@@ -214,7 +214,6 @@ namespace Microsoft.Build.BackEnd
             }
 
             _globalParameters = globalParameters ?? new Dictionary<string, string>();
-            _runtime = runtime;
         }
 
         /// <summary>
@@ -427,10 +426,10 @@ namespace Microsoft.Build.BackEnd
             translator.TranslateCulture(ref _uiCulture);
 #if FEATURE_APPDOMAIN
 
-            // Skip AppDomain configuration when targeting .NET Task Host (Runtime="NET").
+            // Skip AppDomain configuration when targeting .NET Task Host (Runtime="Net").
             // Although MSBuild.exe runs under .NET Framework and has AppDomain support,
             // we don't transmit AppDomain config when communicating with dotnet.exe (it is not supported in .NET 5+).
-            if(!StringComparer.OrdinalIgnoreCase.Equals(_runtime, XMakeAttributes.MSBuildRuntimeValues.net))
+            if (!_isNetRuntime)
             {
                 byte[] appDomainConfigBytes = null;
 

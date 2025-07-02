@@ -72,7 +72,7 @@ namespace Microsoft.Build.BackEnd
         /// <summary>
         /// The set of parameters used to decide which host to launch.
         /// </summary>
-        private IDictionary<string, string> _taskHostParameters;
+        private Dictionary<string, string> _taskHostParameters;
 
         /// <summary>
         /// The type of the task that we are wrapping.
@@ -133,7 +133,7 @@ namespace Microsoft.Build.BackEnd
             IElementLocation taskLocation,
             TaskLoggingContext taskLoggingContext,
             IBuildComponentHost buildComponentHost,
-            IDictionary<string, string> taskHostParameters,
+            Dictionary<string, string> taskHostParameters,
             LoadedType taskType
 #if FEATURE_APPDOMAIN
                 , AppDomainSetup appDomainSetup
@@ -582,10 +582,19 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private void LogErrorUnableToCreateTaskHost(HandshakeOptions requiredContext, string runtime, string architecture, NodeFailedToLaunchException e)
         {
-            string msbuildLocation = NodeProviderOutOfProcTaskHost.GetMSBuildLocationFromHostContext(requiredContext, _taskHostParameters).buildExecutablePath ??
+            string taskHostLocation = NodeProviderOutOfProcTaskHost.GetMSBuildExecutablePathForNonNETRuntimes(requiredContext);
+#if NETFRAMEWORK
+            if (Handshake.IsHandshakeOptionEnabled(requiredContext, HandshakeOptions.NET))
+            {
+                taskHostLocation = NodeProviderOutOfProcTaskHost.GetMSBuildLocationForNETRuntime(requiredContext, _taskHostParameters).MSBuildAssemblyPath;
+            }
+#endif
+            string msbuildLocation = taskHostLocation ??
                 // We don't know the path -- probably we're trying to get a 64-bit assembly on a
                 // 32-bit machine.  At least give them the exe name to look for, though ...
-                ((requiredContext & HandshakeOptions.CLR2) == HandshakeOptions.CLR2 ? "MSBuildTaskHost.exe" : Constants.MSBuildExecutableName);
+                ((requiredContext & HandshakeOptions.CLR2) == HandshakeOptions.CLR2 
+                ? "MSBuildTaskHost.exe" 
+                : NodeProviderOutOfProcTaskHost.GetTaskHostNameFromHostContext(requiredContext));
 
             if (e == null)
             {

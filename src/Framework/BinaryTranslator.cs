@@ -59,7 +59,7 @@ namespace Microsoft.Build.BackEnd
             /// <summary>
             /// The intern reader used in an intern scope.
             /// </summary>
-            private readonly InterningReadTranslator _interner;
+            private InterningReadTranslator _interner;
 
             /// <summary>
             /// The binary reader used in read mode.
@@ -78,7 +78,6 @@ namespace Microsoft.Build.BackEnd
             public BinaryReadTranslator(Stream packetStream, BinaryReaderFactory buffer, byte packetVersion = 0)
             {
                 _reader = buffer.Create(packetStream);
-                _interner = new InterningReadTranslator(this);
                 PacketVersion = packetVersion;
             }
 #nullable disable
@@ -605,7 +604,7 @@ namespace Microsoft.Build.BackEnd
             /// This overload is needed for a workaround concerning serializing BuildResult with a version.
             /// It deserializes additional entries together with the main dictionary.
             /// </remarks>
-            public void TranslateDictionary(ref Dictionary<string, string> dictionary, IEqualityComparer<string> comparer, ref Dictionary<string, string> additionalEntries, HashSet<string> additionalEntriesKeys)
+            public void TranslateDictionary(ref IDictionary<string, string> dictionary, IEqualityComparer<string> comparer, ref Dictionary<string, string> additionalEntries, HashSet<string> additionalEntriesKeys)
             {
                 if (!TranslateNullable(dictionary))
                 {
@@ -812,6 +811,7 @@ namespace Microsoft.Build.BackEnd
                 _isInterning = true;
 
                 // Deserialize the intern header before entering the intern scope.
+                _interner ??= new InterningReadTranslator(this);
                 _interner.Translate(this);
 
                 // No other setup is needed since we can parse the packet directly from the stream.
@@ -1391,7 +1391,7 @@ namespace Microsoft.Build.BackEnd
             /// This overload is needed for a workaround concerning serializing BuildResult with a version.
             /// It serializes additional entries together with the main dictionary.
             /// </remarks>
-            public void TranslateDictionary(ref Dictionary<string, string> dictionary, IEqualityComparer<string> comparer, ref Dictionary<string, string> additionalEntries, HashSet<string> additionalEntriesKeys)
+            public void TranslateDictionary(ref IDictionary<string, string> dictionary, IEqualityComparer<string> comparer, ref Dictionary<string, string> additionalEntries, HashSet<string> additionalEntriesKeys)
             {
                 // Translate whether object is null
                 if ((dictionary is null) && ((additionalEntries is null) || (additionalEntries.Count == 0)))

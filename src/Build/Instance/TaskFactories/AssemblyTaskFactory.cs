@@ -320,7 +320,7 @@ namespace Microsoft.Build.BackEnd
             bool isOutOfProc)
         {
             bool useTaskFactory = false;
-            IDictionary<string, string> mergedParameters = null;
+            Dictionary<string, string> mergedParameters = null;
             _taskLoggingContext = taskLoggingContext;
 
             // Optimization for the common (vanilla AssemblyTaskFactory) case -- only calculate
@@ -550,11 +550,11 @@ namespace Microsoft.Build.BackEnd
         /// Given a set of task parameters from the UsingTask and from the task invocation, generate a dictionary that combines the two, or throws if the merge
         /// is impossible (we shouldn't ever get to this point if it is ...)
         /// </summary>
-        private static IDictionary<string, string> MergeTaskFactoryParameterSets(
+        private static Dictionary<string, string> MergeTaskFactoryParameterSets(
             IDictionary<string, string> factoryIdentityParameters,
             IDictionary<string, string> taskIdentityParameters)
         {
-            IDictionary<string, string> mergedParameters = null;
+            Dictionary<string, string> mergedParameters = null;
             if (factoryIdentityParameters == null || factoryIdentityParameters.Count == 0)
             {
                 mergedParameters = new Dictionary<string, string>(taskIdentityParameters, StringComparer.OrdinalIgnoreCase);
