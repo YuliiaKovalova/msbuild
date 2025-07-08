@@ -111,6 +111,11 @@ namespace Microsoft.Build.Internal
     internal static class Constants
     {
         /// <summary>
+        /// Defines the name of dotnet host path environment variable (e.g  DOTNET_HOST_PATH = C:\msbuild\.dotnet\dotnet.exe).
+        /// </summary>
+        internal const string DotnetHostPathEnvVarName = "DOTNET_HOST_PATH";
+
+        /// <summary>
         /// Defines the name of dotnet process based on the operating system.
         /// </summary>
         internal static readonly string DotnetProcessName = NativeMethodsShared.IsWindows ? "dotnet.exe" : "dotnet";

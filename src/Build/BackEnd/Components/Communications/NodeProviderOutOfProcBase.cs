@@ -789,7 +789,6 @@ namespace Microsoft.Build.BackEnd
 
                         NodePacketType packetType = packet.Type;
 
-                        ITranslator writeTranslator = context._writeTranslator;
                         try
                         {
                             // Write packet type with extended header.

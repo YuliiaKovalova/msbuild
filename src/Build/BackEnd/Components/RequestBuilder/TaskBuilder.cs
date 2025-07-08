@@ -549,9 +549,8 @@ namespace Microsoft.Build.BackEnd
                 taskIdentityParameters.Add(XMakeAttributes.runtime, msbuildRuntime);
                 taskIdentityParameters.Add(XMakeAttributes.architecture, msbuildArchitecture);
             }
-            Debugger.Launch();
 
-            string hostPath = lookup.GetProperty("DOTNET_EXPERIMENTAL_HOST_PATH")?.EvaluatedValue;
+            string hostPath = lookup.GetProperty(Constants.DotnetHostPathEnvVarName)?.EvaluatedValue;
             string msBuildAssemblyPath = Path.GetDirectoryName(lookup.GetProperty("RuntimeIdentifierGraphPath")?.EvaluatedValue) ?? string.Empty;
             if (!string.IsNullOrEmpty(hostPath) && !string.IsNullOrEmpty(msBuildAssemblyPath))
             {
