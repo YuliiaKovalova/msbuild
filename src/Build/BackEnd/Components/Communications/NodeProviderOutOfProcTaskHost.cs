@@ -476,10 +476,7 @@ namespace Microsoft.Build.BackEnd
             string runtimeHostPath = null;
             string msbuildAssemblyPath = Path.Combine(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory, Constants.MSBuildAssemblyName);
 
-            if (taskHostParameters.TryGetValue(Constants.DotnetHostPath, out string resolvedHostPath))
-            {
-                runtimeHostPath = Path.Combine(resolvedHostPath, Constants.DotnetProcessName);
-            }
+            _ = taskHostParameters.TryGetValue(Constants.DotnetHostPath, out runtimeHostPath);
 
             if (string.IsNullOrEmpty(msbuildAssemblyPath) && taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out string resolvedAssemblyPath))
             {
