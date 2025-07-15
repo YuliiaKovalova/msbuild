@@ -29,7 +29,6 @@ using ProjectItemInstanceFactory = Microsoft.Build.Execution.ProjectItemInstance
 using ReservedPropertyNames = Microsoft.Build.Internal.ReservedPropertyNames;
 using TargetLoggingContext = Microsoft.Build.BackEnd.Logging.TargetLoggingContext;
 using TaskLoggingContext = Microsoft.Build.BackEnd.Logging.TaskLoggingContext;
-using System.Diagnostics;
 
 #nullable disable
 

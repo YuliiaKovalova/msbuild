@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
+using Microsoft.Build.Shared.FileSystem;
 
 #nullable disable
 
@@ -469,47 +470,75 @@ namespace Microsoft.Build.BackEnd
         /// - RuntimeHostPath: The path to the dotnet executable that will host the .NET runtime
         /// - MSBuildAssemblyPath: The full path to MSBuild.dll that will be loaded by the dotnet host.
         /// </returns>
-        internal static (string RuntimeHostPath, string MSBuildAssemblyPath) GetMSBuildLocationForNETRuntime(HandshakeOptions hostContext, Dictionary<string, string> taskHostParameters)
+        internal static (string RuntimeHostPath, string MSBuildAssemblyPath) GetMSBuildLocationForNETRuntime(
+            HandshakeOptions hostContext, Dictionary<string, string> taskHostParameters)
         {
             ErrorUtilities.VerifyThrowInternalErrorUnreachable(Handshake.IsHandshakeOptionEnabled(hostContext, HandshakeOptions.TaskHost));
 
-            string msbuildAssemblyPath;
-            _ = taskHostParameters.TryGetValue(Constants.DotnetHostPath, out string runtimeHostPath);
+            taskHostParameters.TryGetValue(Constants.DotnetHostPath, out string runtimeHostPath);
+            var msbuildAssemblyPath = GetMSBuildAssemblyPath(taskHostParameters);
 
+            return (runtimeHostPath, msbuildAssemblyPath);
+        }
+
+        private static string GetMSBuildAssemblyPath(Dictionary<string, string> taskHostParameters)
+        {
             if (!string.IsNullOrEmpty(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory))
             {
-                msbuildAssemblyPath = BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory;
-            }
-            else if (taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out msbuildAssemblyPath))
-            {
-                ValidateNetHostSdkVersion(msbuildAssemblyPath);
-            }
-            else
-            {
-                ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if it is set in environment variable \"MSBuildAssemblyDirectory\".");
+                ValidateNetHostSdkVersion(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory);
+                return BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory;
             }
 
-            // Current process is .NET Framework, but handshake requests .NET
-            // Launch dotnet host and path to MSBuild.dll
-            return (runtimeHostPath, msbuildAssemblyPath);
+            if (taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out string msbuildAssemblyPath))
+            {
+                ValidateNetHostSdkVersion(msbuildAssemblyPath);
+
+                return msbuildAssemblyPath;
+            }
+
+            ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if it is set in environment variable \"MSBuildAssemblyDirectory\".");
+
+            return null;
 
             static void ValidateNetHostSdkVersion(string path)
             {
-                const int minimumSdkVersion = 10;
-                const string errorMessage = $"Net TaskHost is only supported starting from SDK version 10 or later.";
+                const int MinimumSdkVersion = 10;
+                const string ErrorMessage = "Net TaskHost is only supported starting from SDK version 10 or later.";
 
                 if (string.IsNullOrEmpty(path))
                 {
                     ErrorUtilities.ThrowInternalError("SDK path cannot be null or empty.");
-                    return;
                 }
 
-                string lastDirectoryName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar));
-                if (int.TryParse(lastDirectoryName.Substring(0, lastDirectoryName.IndexOf('.')), out int majorVersion) && (majorVersion < minimumSdkVersion))
+                if (!FileSystems.Default.DirectoryExists(path))
                 {
-                    ErrorUtilities.ThrowInternalError($"SDK version {majorVersion} is below the minimum required version. {errorMessage}");
+                    ErrorUtilities.ThrowInternalError($"The directory does not exist: {path}.");
+                }
+
+                var sdkVersion = ExtractSdkVersionFromPath(path);
+                if (sdkVersion < MinimumSdkVersion)
+                {
+                    ErrorUtilities.ThrowInternalError($"SDK version {sdkVersion} is below the minimum required version. {ErrorMessage}");
                 }
             }
+        }
+
+        private static int ExtractSdkVersionFromPath(string path)
+        {
+            string lastDirectoryName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar));
+
+            if (string.IsNullOrEmpty(lastDirectoryName))
+            {
+                return 0;
+            }
+
+            int dotIndex = lastDirectoryName.IndexOf('.');
+            if (dotIndex <= 0)
+            {
+                return 0;
+            }
+
+            return int.TryParse(lastDirectoryName.Substring(0, dotIndex), out int majorVersion) ? majorVersion : 0;
         }
 
         private static string GetOrInitializeX64Clr2Path(string toolName)

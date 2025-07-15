@@ -8,6 +8,7 @@ using System.IO;
 namespace Microsoft.Build.BackEnd
 {
     #region Enums
+
     /// <summary>
     /// Enumeration of all of the packet types used for communication.
     /// </summary>

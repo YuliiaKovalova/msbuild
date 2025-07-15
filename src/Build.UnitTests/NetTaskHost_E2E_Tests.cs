@@ -22,16 +22,29 @@ namespace Microsoft.Build.Engine.UnitTests
         {
             using TestEnvironment env = TestEnvironment.Create();
             var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
-
-            // _ = env.SetEnvironmentVariable("MSBuildToolsDirectoryNET", Path.Combine(RunnerUtilities.BootstrapRootPath, "core"));
-            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", Path.Combine(RunnerUtilities.BootstrapRootPath, "core"));
-            _ = env.SetEnvironmentVariable("MSBUILDDEBUGCOMM", "1");
-            _ = env.SetEnvironmentVariable("MSBUILDDEBUGPATH", "C:\\Users\\ykovalova\\Downloads");
+            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", bootstrapCoreFolder);
 
             string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
 
-            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -restore -v:m -bl:\"C:\\Users\\ykovalova\\Downloads\\test.binlog\"", out bool successTestTask, timeoutMilliseconds: 30000000);
+            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -v:m", out bool successTestTask);
             successTestTask.ShouldBeTrue();
+
+            testTaskOutput.ShouldContain($"The task is executed in process: dotnet");
+            testTaskOutput.ShouldContain($"Process path: {Path.Combine(bootstrapCoreFolder, Constants.DotnetProcessName)}");
+        }
+
+        [WindowsFullFrameworkOnlyFact]
+        public void NetTaskHost_MinimumSDKTest()
+        {
+            using TestEnvironment env = TestEnvironment.Create();
+            var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
+            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", bootstrapCoreFolder);
+            _ = env.SetEnvironmentVariable("MSBuildAssemblyDirectory", Path.Combine(RunnerUtilities.BootstrapMsBuildBinaryLocation, "sdk", "7.0.0"));
+
+            string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
+
+            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -v:m", out bool successTestTask);
+            successTestTask.ShouldBeFalse();
 
             testTaskOutput.ShouldContain($"The task is executed in process: dotnet");
             testTaskOutput.ShouldContain($"Process path: {Path.Combine(bootstrapCoreFolder, Constants.DotnetProcessName)}");
