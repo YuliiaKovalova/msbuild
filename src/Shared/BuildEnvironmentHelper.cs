@@ -664,7 +664,7 @@ namespace Microsoft.Build.Shared
         internal string MSBuildToolsDirectoryArm64 { get; }
 
         /// <summary>
-        /// Path to the MSBuild assembly.
+        /// Path to the MSBuild assembly. Can be set by the environment variable MSBuildAssemblyDirectory or from project property 
         /// </summary>
         internal string MSBuildAssemblyDirectory { get; }
 

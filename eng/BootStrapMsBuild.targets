@@ -256,7 +256,10 @@
     <Copy SourceFiles="$(RepoRoot)\global.json" DestinationFiles="$(InstallDir)\global.json" />
     <PropertyGroup>
         <GlobalJsonContent>$([System.IO.File]::ReadAllText('$(InstallDir)\global.json'))</GlobalJsonContent>
+        <!-- Remove the paths section -->
         <ModifiedContent>$([System.Text.RegularExpressions.Regex]::Replace($(GlobalJsonContent), ',?\s*"paths":\s*\[[^\]]*\]', ''))</ModifiedContent>
+        <!-- Replace the dotnet version with BootstrapSdkVersion -->
+        <ModifiedContent>$([System.Text.RegularExpressions.Regex]::Replace($(ModifiedContent), '"dotnet":\s*"[^"]*"', '"dotnet": "$(BootstrapSdkVersion)"'))</ModifiedContent>
     </PropertyGroup>
 
     <WriteLinesToFile File="$(InstallDir)\global.json"

@@ -473,15 +473,20 @@ namespace Microsoft.Build.BackEnd
         {
             ErrorUtilities.VerifyThrowInternalErrorUnreachable(Handshake.IsHandshakeOptionEnabled(hostContext, HandshakeOptions.TaskHost));
 
-            string runtimeHostPath = null;
-            string msbuildAssemblyPath = Path.Combine(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory, Constants.MSBuildAssemblyName);
+            string msbuildAssemblyPath;
+            _ = taskHostParameters.TryGetValue(Constants.DotnetHostPath, out string runtimeHostPath);
 
-            _ = taskHostParameters.TryGetValue(Constants.DotnetHostPath, out runtimeHostPath);
-
-            if (string.IsNullOrEmpty(msbuildAssemblyPath) && taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out string resolvedAssemblyPath))
+            if (!string.IsNullOrEmpty(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory))
             {
-                ValidateNetHostSdkVersion(resolvedAssemblyPath);
-                msbuildAssemblyPath = Path.Combine(resolvedAssemblyPath, Constants.MSBuildAssemblyName);
+                msbuildAssemblyPath = BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory;
+            }
+            else if (taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out msbuildAssemblyPath))
+            {
+                ValidateNetHostSdkVersion(msbuildAssemblyPath);
+            }
+            else
+            {
+                ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if it is set in environment variable \"MSBuildAssemblyDirectory\".");
             }
 
             // Current process is .NET Framework, but handshake requests .NET
@@ -491,7 +496,7 @@ namespace Microsoft.Build.BackEnd
             static void ValidateNetHostSdkVersion(string path)
             {
                 const int minimumSdkVersion = 10;
-                const string errorMessage = $"Net TaskHost is only supported in SDK version 10 or later.";
+                const string errorMessage = $"Net TaskHost is only supported starting from SDK version 10 or later.";
 
                 if (string.IsNullOrEmpty(path))
                 {
@@ -500,9 +505,7 @@ namespace Microsoft.Build.BackEnd
                 }
 
                 string lastDirectoryName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar));
-
-                if (int.TryParse(lastDirectoryName.Substring(0, lastDirectoryName.IndexOf('.')), out int majorVersion)
-                    && ((majorVersion < minimumSdkVersion) || lastDirectoryName.Contains("preview")))
+                if (int.TryParse(lastDirectoryName.Substring(0, lastDirectoryName.IndexOf('.')), out int majorVersion) && (majorVersion < minimumSdkVersion))
                 {
                     ErrorUtilities.ThrowInternalError($"SDK version {majorVersion} is below the minimum required version. {errorMessage}");
                 }
@@ -611,15 +614,17 @@ namespace Microsoft.Build.BackEnd
             {
                 (string runtimeHostPath, string msbuildAssemblyPath) = GetMSBuildLocationForNETRuntime(hostContext, taskHostParameters);
 
-                CommunicationsUtilities.Trace("For a host context of {0}, spawning dotnet.exe from {1}.", hostContext.ToString(), msbuildAssemblyPath);
+                CommunicationsUtilities.Trace("For a host context of {0}, spawning dotnet.exe from {1}.", hostContext.ToString(), runtimeHostPath);
+
+                var handshake = new Handshake(hostContext, predefinedToolsDirectory: msbuildAssemblyPath);
 
                 // There is always one task host per host context so we always create just 1 one task host node here.      
                 nodeContexts = GetNodes(
                     runtimeHostPath,
-                    string.Format(commandLineArgsPlaceholder, msbuildAssemblyPath, ComponentHost.BuildParameters.EnableNodeReuse, ComponentHost.BuildParameters.LowPriority),
+                    string.Format(commandLineArgsPlaceholder, Path.Combine(msbuildAssemblyPath, Constants.MSBuildAssemblyName), ComponentHost.BuildParameters.EnableNodeReuse, ComponentHost.BuildParameters.LowPriority),
                     nodeId,
                     this,
-                    new Handshake(hostContext),
+                    handshake,
                     NodeContextCreated,
                     NodeContextTerminated,
                     1);

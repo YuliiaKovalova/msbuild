@@ -24,10 +24,13 @@ namespace Microsoft.Build.Engine.UnitTests
             var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
 
             // _ = env.SetEnvironmentVariable("MSBuildToolsDirectoryNET", Path.Combine(RunnerUtilities.BootstrapRootPath, "core"));
-            // _ = env.SetEnvironmentVariable("MSBuildAssemblyDirectory", Path.Combine(RunnerUtilities.BootstrapRootPath, "core", "sdk", RunnerUtilities.BootstrapSdkVersion));
+            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", Path.Combine(RunnerUtilities.BootstrapRootPath, "core"));
+            _ = env.SetEnvironmentVariable("MSBUILDDEBUGCOMM", "1");
+            _ = env.SetEnvironmentVariable("MSBUILDDEBUGPATH", "C:\\Users\\ykovalova\\Downloads");
+
             string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
 
-            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -restore -v:m -bl:\"C:\\Users\\ykovalova\\Downloads\\test22.binlog\"", out bool successTestTask, timeoutMilliseconds: 30000000);
+            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -restore -v:m -bl:\"C:\\Users\\ykovalova\\Downloads\\test.binlog\"", out bool successTestTask, timeoutMilliseconds: 30000000);
             successTestTask.ShouldBeTrue();
 
             testTaskOutput.ShouldContain($"The task is executed in process: dotnet");

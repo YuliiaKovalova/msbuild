@@ -41,7 +41,7 @@ namespace Microsoft.Build.BackEnd
         /// <summary>
         /// The number of times to retry creating an out-of-proc node.
         /// </summary>
-        private const int NodeCreationRetries = 10;
+        private const int NodeCreationRetries = 1;
 
         /// <summary>
         /// The amount of time to wait for an out-of-proc node to spool up before we give up.
@@ -780,13 +780,12 @@ namespace Microsoft.Build.BackEnd
                     context._packetEnqueued.WaitOne();
                     while (context._packetWriteQueue.TryDequeue(out INodePacket packet))
                     {
+                        NodePacketType packetType = packet.Type;
                         // clear the buffer but keep the underlying capacity to avoid reallocations
                         writeStream.SetLength(0);
 
-
                         ITranslator writeTranslator = context._writeTranslator;
-
-                        NodePacketType packetType = packet.Type;
+                        Debugger.Launch();
                         try
                         {
                             // Write packet type with extended header.
@@ -795,8 +794,7 @@ namespace Microsoft.Build.BackEnd
 
                             // Pad for the packet length
                             WriteInt32(writeStream, 0);
-
-                            // Write extended header with version
+                            // Write extended header with version BEFORE writing packet data
                             PacketTypeExtensions.WriteVersion(writeStream, PacketTypeExtensions.PacketVersion);
 
                             int writeStreamLength = (int)writeStream.Position;

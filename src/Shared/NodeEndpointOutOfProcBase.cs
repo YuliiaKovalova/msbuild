@@ -17,12 +17,16 @@ using Microsoft.Build.Shared;
 using System.IO.Pipes;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
+
 
 #if FEATURE_SECURITY_PERMISSIONS || FEATURE_PIPE_SECURITY
 using System.Security.AccessControl;
 #endif
 #if FEATURE_PIPE_SECURITY && FEATURE_NAMED_PIPE_SECURITY_CONSTRUCTOR
 using System.Security.Principal;
+using System.Diagnostics;
+
 
 #endif
 #if NET451_OR_GREATER || NETCOREAPP
@@ -684,18 +688,19 @@ namespace Microsoft.Build.BackEnd
                                 break;
                             }
 
+#if NETCOREAPP
+                            Debugger.Launch();
+#endif
                             // Check if this packet has an extended header that includes a version part.
                             byte rawType = headerByte[0];
-
                             bool hasExtendedHeader = PacketTypeExtensions.HasExtendedHeader(rawType);
+                            NodePacketType packetType = hasExtendedHeader ? PacketTypeExtensions.GetNodePacketType(rawType) : (NodePacketType)rawType;
 
                             byte version = 0;
                             if (hasExtendedHeader)
                             {
                                 version = PacketTypeExtensions.ReadVersion(localReadPipe);
                             }
-
-                            NodePacketType packetType = hasExtendedHeader ? PacketTypeExtensions.GetNodePacketType(rawType) : (NodePacketType)rawType;
 
                             try
                             {
@@ -785,8 +790,8 @@ namespace Microsoft.Build.BackEnd
             while (!exitLoop);
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -538,7 +538,6 @@ namespace Microsoft.Build.BackEnd
 
             IDictionary<string, string> taskIdentityParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-
             // only bother to create a task identity parameter set if we're putting anything in there -- otherwise,
             // a null set will be treated as equivalent to all parameters being "don't care".
             if (msbuildRuntime != String.Empty || msbuildArchitecture != String.Empty)
