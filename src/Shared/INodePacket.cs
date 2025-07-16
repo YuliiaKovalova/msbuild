@@ -4,6 +4,7 @@
 #nullable disable
 
 using System.IO;
+using Microsoft.Build.Internal;
 
 namespace Microsoft.Build.BackEnd
 {
@@ -264,7 +265,7 @@ namespace Microsoft.Build.BackEnd
         #endregion
     }
 
-    internal static class PacketTypeExtensions
+    internal static class NodePacketTypeExtensions
     {
         public const byte PacketVersion = 1;
 
@@ -281,10 +282,20 @@ namespace Microsoft.Build.BackEnd
         // Get base type, stripping the extended header flag
         public static NodePacketType GetNodePacketType(byte rawType) => (NodePacketType)(rawType & ~ExtendedHeaderFlag);
 
-        // Create a type with extended header flag
-        public static byte CreateExtendedHeaderType(NodePacketType type) => (byte)((byte)type | ExtendedHeaderFlag);
+        // Create a type with extended header flag for net task host packets.
+        public static bool TryCreateExtendedHeaderType(HandshakeOptions handshakeOptions, NodePacketType type, out byte extendedheader)
+        {
+            if (Handshake.IsHandshakeOptionEnabled(handshakeOptions, Handshake.NetTaskHostFlags))
+            {
+                extendedheader = (byte)((byte)type | ExtendedHeaderFlag);
+                return true;
+            }
 
-        // Read extended header (returns version)
+            extendedheader = (byte)type;
+            return false;
+        }
+
+        // Read extended header (returns packet version)
         public static byte ReadVersion(Stream stream)
         {
             int value = stream.ReadByte();

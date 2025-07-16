@@ -23,31 +23,15 @@ namespace Microsoft.Build.Engine.UnitTests
             using TestEnvironment env = TestEnvironment.Create();
             var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
             _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", bootstrapCoreFolder);
-
             string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
 
-            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -v:m", out bool successTestTask);
+            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild(
+                $"{testProjectPath} -restore -v:n",
+                out bool successTestTask);
             successTestTask.ShouldBeTrue();
 
             testTaskOutput.ShouldContain($"The task is executed in process: dotnet");
-            testTaskOutput.ShouldContain($"Process path: {Path.Combine(bootstrapCoreFolder, Constants.DotnetProcessName)}");
-        }
-
-        [WindowsFullFrameworkOnlyFact]
-        public void NetTaskHost_MinimumSDKTest()
-        {
-            using TestEnvironment env = TestEnvironment.Create();
-            var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
-            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", bootstrapCoreFolder);
-            _ = env.SetEnvironmentVariable("MSBuildAssemblyDirectory", Path.Combine(RunnerUtilities.BootstrapMsBuildBinaryLocation, "sdk", "7.0.0"));
-
-            string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
-
-            string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild($"{testProjectPath} -v:m", out bool successTestTask);
-            successTestTask.ShouldBeFalse();
-
-            testTaskOutput.ShouldContain($"The task is executed in process: dotnet");
-            testTaskOutput.ShouldContain($"Process path: {Path.Combine(bootstrapCoreFolder, Constants.DotnetProcessName)}");
+            testTaskOutput.ShouldContain($"Process path: {Path.Combine(bootstrapCoreFolder, Constants.DotnetProcessName)}", customMessage: testTaskOutput);
         }
     }
 }

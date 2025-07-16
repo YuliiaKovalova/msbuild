@@ -67,9 +67,11 @@ namespace Microsoft.Build.BackEnd
     internal interface ITranslator : IDisposable
     {
         /// <summary>
-        /// The packet version associated with the stream.
+        /// Gets or sets the packet version associated with the stream.
+        /// This can be used to exclude varios fields from translation for backwards compatibility,
+        /// e.g. when Writer introduces information that should be skipped in the Reader stream.
         /// </summary>
-        byte PacketVersion { get; }
+        byte PacketVersion { get; set; }
 
         /// <summary>
         /// Returns the current serialization mode.

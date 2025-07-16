@@ -266,7 +266,6 @@ namespace Microsoft.Build.BackEnd
 
             TaskHostConfiguration hostConfiguration =
                 new TaskHostConfiguration(
-                        runtime,
                         _buildComponentHost.BuildParameters.NodeId,
                         NativeMethodsShared.GetCurrentDirectory(),
                         CommunicationsUtilities.GetEnvironmentVariables(),

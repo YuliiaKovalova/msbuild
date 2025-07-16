@@ -34,9 +34,9 @@ namespace Microsoft.Build.BackEnd
         /// Returns a read-only serializer.
         /// </summary>
         /// <returns>The serializer.</returns>
-        internal static ITranslator GetReadTranslator(Stream stream, BinaryReaderFactory buffer, byte packetVersion = 0)
+        internal static ITranslator GetReadTranslator(Stream stream, BinaryReaderFactory buffer)
         {
-            return new BinaryReadTranslator(stream, buffer, packetVersion);
+            return new BinaryReadTranslator(stream, buffer);
         }
 #nullable disable
 
@@ -44,11 +44,10 @@ namespace Microsoft.Build.BackEnd
         /// Returns a write-only serializer.
         /// </summary>
         /// <param name="stream">The stream containing data to serialize.</param>
-        /// <param name="packetVersion">The packet version associated with the stream.</param>
         /// <returns>The serializer.</returns>
-        internal static ITranslator GetWriteTranslator(Stream stream, byte packetVersion = 0)
+        internal static ITranslator GetWriteTranslator(Stream stream)
         {
-            return new BinaryWriteTranslator(stream, packetVersion);
+            return new BinaryWriteTranslator(stream);
         }
 
         /// <summary>
@@ -75,10 +74,9 @@ namespace Microsoft.Build.BackEnd
             /// <summary>
             /// Constructs a serializer from the specified stream, operating in the designated mode.
             /// </summary>
-            public BinaryReadTranslator(Stream packetStream, BinaryReaderFactory buffer, byte packetVersion = 0)
+            public BinaryReadTranslator(Stream packetStream, BinaryReaderFactory buffer)
             {
                 _reader = buffer.Create(packetStream);
-                PacketVersion = packetVersion;
             }
 #nullable disable
 
@@ -120,7 +118,11 @@ namespace Microsoft.Build.BackEnd
                 { return TranslationDirection.ReadFromStream; }
             }
 
-            public byte PacketVersion { get; }
+            /// <summary>
+            /// Gets or sets the packet version associated with the stream.
+            /// This can be used to exclude varios fields from translation for backwards compatibility.
+            /// </summary>
+            public byte PacketVersion { get; set; }
 
             /// <summary>
             /// Translates a boolean.
@@ -903,11 +905,9 @@ namespace Microsoft.Build.BackEnd
             /// Constructs a serializer from the specified stream, operating in the designated mode.
             /// </summary>
             /// <param name="packetStream">The stream serving as the source or destination of data.</param>
-            /// <param name="packetVersion">The packet version associated with the stream.</param>
-            public BinaryWriteTranslator(Stream packetStream, byte packetVersion)
+            public BinaryWriteTranslator(Stream packetStream)
             {
                 _writer = new BinaryWriter(packetStream);
-                PacketVersion = packetVersion;
             }
 
             /// <summary>
@@ -948,7 +948,11 @@ namespace Microsoft.Build.BackEnd
                 { return TranslationDirection.WriteToStream; }
             }
 
-            public byte PacketVersion { get; }
+            /// <summary>
+            /// Gets or sets the packet version associated with the stream.
+            /// This can be used to exclude varios fields from translation for backwards compatibility.
+            /// </summary>
+            public byte PacketVersion { get; set; }
 
             /// <summary>
             /// Translates a boolean.

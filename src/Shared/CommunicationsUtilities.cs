@@ -99,8 +99,13 @@ namespace Microsoft.Build.Internal
         // Helper method to validate handshake option presense.
         internal static bool IsHandshakeOptionEnabled(HandshakeOptions hostContext, HandshakeOptions option) => (hostContext & option) == option;
 
+        // Source options of the handshake.
+        internal HandshakeOptions HandshakeOptions { get; }
+
         protected Handshake(HandshakeOptions nodeType, bool includeSessionId, string predefinedToolsDirectory)
         {
+            HandshakeOptions = nodeType;
+
             // Build handshake options with version in upper bits
             const int handshakeVersion = (int)CommunicationsUtilities.handshakeVersion;
             var options = (int)nodeType | (handshakeVersion << 24);
