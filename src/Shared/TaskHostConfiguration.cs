@@ -417,9 +417,11 @@ namespace Microsoft.Build.BackEnd
             translator.TranslateCulture(ref _uiCulture);
 #if FEATURE_APPDOMAIN
             // The packet version is used to determine if the AppDomain configuration should be serialized.
+            // If the packet version is bigger then 0, it means the task host will running under .NET.
             // Although MSBuild.exe runs under .NET Framework and has AppDomain support,
             // we don't transmit AppDomain config when communicating with dotnet.exe (it is not supported in .NET 5+).
-            if (translator.PacketVersion == 0)
+            var isNetRuntime = translator.PacketVersion > 0;
+            if (!isNetRuntime)
             {
                 byte[] appDomainConfigBytes = null;
 

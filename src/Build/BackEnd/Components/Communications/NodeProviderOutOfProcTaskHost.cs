@@ -482,12 +482,6 @@ namespace Microsoft.Build.BackEnd
 
         private static string GetMSBuildAssemblyPath(Dictionary<string, string> taskHostParameters)
         {
-            if (!string.IsNullOrEmpty(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory))
-            {
-                ValidateNetHostSdkVersion(BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory);
-                return BuildEnvironmentHelper.Instance.MSBuildAssemblyDirectory;
-            }
-
             if (taskHostParameters.TryGetValue(Constants.MSBuildAssemblyPath, out string msbuildAssemblyPath))
             {
                 ValidateNetHostSdkVersion(msbuildAssemblyPath);
@@ -495,7 +489,7 @@ namespace Microsoft.Build.BackEnd
                 return msbuildAssemblyPath;
             }
 
-            ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if it is set in environment variable \"MSBuildAssemblyDirectory\".");
+            ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if you runtime supports .NET Task Host.");
 
             return null;
 

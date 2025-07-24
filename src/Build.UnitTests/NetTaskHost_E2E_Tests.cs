@@ -22,7 +22,6 @@ namespace Microsoft.Build.Engine.UnitTests
         {
             using TestEnvironment env = TestEnvironment.Create();
             var bootstrapCoreFolder = Path.Combine(RunnerUtilities.BootstrapRootPath, "core");
-            _ = env.SetEnvironmentVariable("DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR", bootstrapCoreFolder);
             string testProjectPath = Path.Combine(TestAssetsRootPath, "ExampleNetTask", "TestNetTask", "TestNetTask.csproj");
 
             string testTaskOutput = RunnerUtilities.ExecBootstrapedMSBuild(

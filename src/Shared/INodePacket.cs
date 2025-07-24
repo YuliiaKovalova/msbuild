@@ -227,13 +227,13 @@ namespace Microsoft.Build.BackEnd
 
         /// <summary>
         /// Response from server node command
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI
+        /// Keep this enum value constant intact as this is part of contract with dotnet CLI.
         /// </summary>
         ServerNodeBuildResult = 0x91, // Binary: 10010001
 
         /// <summary>
         /// Info about server console activity.
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI
+        /// Keep this enum value constant intact as this is part of contract with dotnet CLI.
         /// </summary>
         ServerNodeConsoleWrite = 0x92, // Binary: 10010010
 

@@ -91,6 +91,17 @@ namespace Microsoft.Build.Internal
 
         protected readonly HandshakeComponents _handshakeComponents;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Handshake"/> class with the specified node type
+        /// and optional predefined tools directory.
+        /// </summary>
+        /// <param name="nodeType">
+        /// The <see cref="HandshakeOptions"/> that specifies the type of node and configuration options for the handshake operation.
+        /// </param>
+        /// <param name="predefinedToolsDirectory">
+        /// An optional directory path containing predefined tools that should be available during the handshake.
+        /// For .NET TaskHost assembly directory we set the expectation for the child dotnet process to connect to by specifying this parameter.
+        /// </param>
         internal Handshake(HandshakeOptions nodeType, string predefinedToolsDirectory = null)
             : this(nodeType, includeSessionId: true, predefinedToolsDirectory)
         {
@@ -136,6 +147,7 @@ namespace Microsoft.Build.Internal
         private string GetToolsDirectory(bool isNetTaskHost, string predefinedToolsDirectory) =>
 #if NETFRAMEWORK
             isNetTaskHost
+
                 // For .NET TaskHost assembly directory we set the expectation for the child dotnet process to connect to.
                 ? predefinedToolsDirectory
                 : BuildEnvironmentHelper.Instance.MSBuildToolsDirectoryRoot;
