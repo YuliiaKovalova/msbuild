@@ -68,7 +68,7 @@ namespace Microsoft.Build.BackEnd
     {
         /// <summary>
         /// Gets or sets the packet version associated with the stream.
-        /// This can be used to exclude varios fields from translation for backwards compatibility,
+        /// This can be used to exclude various fields from translation for backwards compatibility,
         /// e.g. when Writer introduces information that should be skipped in the Reader stream.
         /// </summary>
         byte PacketVersion { get; set; }

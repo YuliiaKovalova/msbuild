@@ -120,7 +120,7 @@ namespace Microsoft.Build.BackEnd
 
             /// <summary>
             /// Gets or sets the packet version associated with the stream.
-            /// This can be used to exclude varios fields from translation for backwards compatibility.
+            /// This can be used to exclude various fields from translation for backwards compatibility.
             /// </summary>
             public byte PacketVersion { get; set; }
 
@@ -950,7 +950,7 @@ namespace Microsoft.Build.BackEnd
 
             /// <summary>
             /// Gets or sets the packet version associated with the stream.
-            /// This can be used to exclude varios fields from translation for backwards compatibility.
+            /// This can be used to exclude various fields from translation for backwards compatibility.
             /// </summary>
             public byte PacketVersion { get; set; }
 
