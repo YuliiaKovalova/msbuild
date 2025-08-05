@@ -35,7 +35,7 @@ namespace Microsoft.Build.BackEnd
         /// UI Culture Information
         /// App Domain Configuration XML
         /// </summary>
-        NodeConfiguration, // 0x00
+        NodeConfiguration = 0x00,
 
         /// <summary>
         /// A BuildRequestConfiguration object.
@@ -273,9 +273,6 @@ namespace Microsoft.Build.BackEnd
         // Flag bits in upper 2 bits
         private const byte ExtendedHeaderFlag = 0x40;  // Bit 6: 01000000
 
-        // Packet type mask (lower 6 bits)
-        private const byte PacketTypeMask = (byte)NodePacketType.TypeMask; // 00111111
-
         /// <summary>
         /// Determines if a packet has an extended header by checking if the extended header flag is set.
         /// Uses bit 6 which is now safely separated from packet type values.
@@ -289,7 +286,7 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         /// <param name="rawType">The raw packet type byte with potential flags.</param>
         /// <returns>The clean packet type without flag bits.</returns>
-        public static NodePacketType GetNodePacketType(byte rawType) => (NodePacketType)(rawType & PacketTypeMask);
+        public static NodePacketType GetNodePacketType(byte rawType) => (NodePacketType)(rawType & (byte)NodePacketType.TypeMask);
 
         /// <summary>
         /// Create a packet type byte with extended header flag for net task host packets.
