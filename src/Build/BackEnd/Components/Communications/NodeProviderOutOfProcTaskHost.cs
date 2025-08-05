@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Microsoft.Build.Exceptions;
 using Microsoft.Build.Internal;
 using Microsoft.Build.Shared;
 using Microsoft.Build.Shared.FileSystem;
@@ -489,9 +490,7 @@ namespace Microsoft.Build.BackEnd
                 return msbuildAssemblyPath;
             }
 
-            ErrorUtilities.ThrowInternalError("Path to MSBuild.dll is not defined. Check if you runtime supports .NET Task Host.");
-
-            return null;
+            throw new InvalidProjectFileException("Path to MSBuild.dll is not defined. Check if used SDK supports .NET Task Host.");
 
             static void ValidateNetHostSdkVersion(string path)
             {
@@ -511,7 +510,7 @@ namespace Microsoft.Build.BackEnd
                 var sdkVersion = ExtractSdkVersionFromPath(path);
                 if (sdkVersion < MinimumSdkVersion)
                 {
-                    ErrorUtilities.ThrowInternalError($"SDK version {sdkVersion} is below the minimum required version. {ErrorMessage}");
+                    throw new InvalidProjectFileException($"SDK version {sdkVersion} is below the minimum required version. {ErrorMessage}");
                 }
             }
         }

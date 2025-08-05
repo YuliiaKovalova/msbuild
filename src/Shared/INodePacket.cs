@@ -12,9 +12,13 @@ namespace Microsoft.Build.BackEnd
 
     /// <summary>
     /// Enumeration of all of the packet types used for communication.
+    /// Uses lower 6 bits for packet type (0-63), upper 2 bits reserved for flags.
     /// </summary>
     internal enum NodePacketType : byte
     {
+        // Mask for extracting packet type (lower 6 bits)
+        TypeMask = 0x3F, // 00111111
+
         /// <summary>
         /// Notifies the Node to set a configuration for a particular build.  This is sent before
         /// any BuildRequests are made and will not be sent again for a particular build.  This instructs
@@ -31,7 +35,7 @@ namespace Microsoft.Build.BackEnd
         /// UI Culture Information
         /// App Domain Configuration XML
         /// </summary>
-        NodeConfiguration,
+        NodeConfiguration, // 0x00
 
         /// <summary>
         /// A BuildRequestConfiguration object.
@@ -45,7 +49,7 @@ namespace Microsoft.Build.BackEnd
         /// Project Properties
         /// Project Tools Version
         /// </summary>
-        BuildRequestConfiguration,
+        BuildRequestConfiguration, // 0x01
 
         /// <summary>
         /// A response to a request to map a build configuration
@@ -54,7 +58,7 @@ namespace Microsoft.Build.BackEnd
         /// Node Configuration ID
         /// Global Configuration ID
         /// </summary>
-        BuildRequestConfigurationResponse,
+        BuildRequestConfigurationResponse, // 0x02
 
         /// <summary>
         /// Information about a project that has been loaded by a node.
@@ -64,7 +68,7 @@ namespace Microsoft.Build.BackEnd
         /// Initial Targets
         /// Default Targets
         /// </summary>
-        ProjectLoadInfo,
+        ProjectLoadInfo, // 0x03
 
         /// <summary>
         /// Packet used to inform the scheduler that a node's active build request is blocked.
@@ -75,7 +79,7 @@ namespace Microsoft.Build.BackEnd
         /// Blocked Target, if any
         /// Child Requests, if any
         /// </summary>
-        BuildRequestBlocker,
+        BuildRequestBlocker, // 0x04
 
         /// <summary>
         /// Packet used to unblocked a blocked request on a node.
@@ -84,7 +88,7 @@ namespace Microsoft.Build.BackEnd
         /// Build Request ID
         /// Build Results for child requests, if any.
         /// </summary>
-        BuildRequestUnblocker,
+        BuildRequestUnblocker, // 0x05
 
         /// <summary>
         /// A BuildRequest object
@@ -95,7 +99,7 @@ namespace Microsoft.Build.BackEnd
         /// Project Instance ID
         /// Targets
         /// </summary>
-        BuildRequest,
+        BuildRequest, // 0x06
 
         /// <summary>
         /// A BuildResult object
@@ -107,7 +111,7 @@ namespace Microsoft.Build.BackEnd
         /// Outputs (per Target)
         /// Results (per Target)
         /// </summary>
-        BuildResult,
+        BuildResult, // 0x07
 
         /// <summary>
         /// A logging message.
@@ -116,7 +120,7 @@ namespace Microsoft.Build.BackEnd
         /// Build Event Type
         /// Build Event Args
         /// </summary>
-        LogMessage,
+        LogMessage, // 0x08
 
         /// <summary>
         /// Informs the node that the build is complete.
@@ -124,7 +128,7 @@ namespace Microsoft.Build.BackEnd
         /// Contents:
         /// Prepare For Reuse
         /// </summary>
-        NodeBuildComplete,
+        NodeBuildComplete, // 0x09
 
         /// <summary>
         /// Reported by the node (or node provider) when a node has terminated.  This is the final packet that will be received
@@ -133,7 +137,7 @@ namespace Microsoft.Build.BackEnd
         /// Contents:
         /// Reason
         /// </summary>
-        NodeShutdown,
+        NodeShutdown, // 0x0A
 
         /// <summary>
         /// Notifies the task host to set the task-specific configuration for a particular task execution.
@@ -150,7 +154,7 @@ namespace Microsoft.Build.BackEnd
         /// Task assembly location
         /// Parameter names and values to set to the task prior to execution
         /// </summary>
-        TaskHostConfiguration,
+        TaskHostConfiguration, // 0x0B
 
         /// <summary>
         /// Informs the parent node that the task host has finished executing a
@@ -163,7 +167,7 @@ namespace Microsoft.Build.BackEnd
         /// Task result (success / failure)
         /// Resultant parameter values (for output gathering)
         /// </summary>
-        TaskHostTaskComplete,
+        TaskHostTaskComplete, // 0x0C
 
         /// <summary>
         /// Message sent from the node to its paired task host when a task that
@@ -172,76 +176,73 @@ namespace Microsoft.Build.BackEnd
         /// Contents:
         /// (nothing)
         /// </summary>
-        TaskHostTaskCancelled,
+        TaskHostTaskCancelled, // 0x0D
 
         /// <summary>
         /// Message sent from a node when it needs to have an SDK resolved.
         /// </summary>
-        ResolveSdkRequest,
+        ResolveSdkRequest, // 0x0E
 
         /// <summary>
         /// Message sent back to a node when an SDK has been resolved.
         /// </summary>
-        ResolveSdkResponse,
+        ResolveSdkResponse, // 0x0F
 
         /// <summary>
         /// Message sent from a node when a task is requesting or returning resources from the scheduler.
         /// </summary>
-        ResourceRequest,
+        ResourceRequest, // 0x10
 
         /// <summary>
         /// Message sent back to a node informing it about the resource that were granted by the scheduler.
         /// </summary>
-        ResourceResponse,
+        ResourceResponse, // 0x11
 
         /// <summary>
         /// Message sent from a node reporting a file access.
         /// </summary>
-        FileAccessReport,
+        FileAccessReport, // 0x12
 
         /// <summary>
         /// Message sent from a node reporting process data.
         /// </summary>
-        ProcessReport,
+        ProcessReport, // 0x13
 
-        // Server command packets with hardcoded values that don't have the 6th bit set.
-        // It is reserved for ExtendedHeaderFlag (0x40 = 0100 0000).
-        // Do not set it for any other packet types to avoid conflicts.
-        #region ServerNode enums 
 
         /// <summary>
         /// A request contains the inputs to the RAR task.
         /// </summary>
-        RarNodeExecuteRequest,
+        RarNodeExecuteRequest, // 0x14
 
         /// <summary>
         /// A request contains the outputs and log events of a completed RAR task.
         /// </summary>
-        RarNodeExecuteResponse,
+        RarNodeExecuteResponse, // 0x15
+
+        // Reserve space for future core packet types (0x16-0x3B available for expansion)
+
+        // Server command packets placed at end of safe range to maintain separation from core packets
+        #region ServerNode enums 
 
         /// <summary>
         /// Command in form of MSBuild command line for server node - MSBuild Server.
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI.
         /// </summary>
-        ServerNodeBuildCommand = 0x90, // Binary: 10010000
+        ServerNodeBuildCommand = 0x3C, // End of safe range
 
         /// <summary>
-        /// Response from server node command
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI.
+        /// Response from server node command.
         /// </summary>
-        ServerNodeBuildResult = 0x91, // Binary: 10010001
+        ServerNodeBuildResult = 0x3D,
 
         /// <summary>
         /// Info about server console activity.
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI.
         /// </summary>
-        ServerNodeConsoleWrite = 0x92, // Binary: 10010010
+        ServerNodeConsoleWrite = 0x3E,
 
         /// <summary>
         /// Command to cancel ongoing build.
-        /// Keep this enum value constant intact as this is part of contract with dotnet CLI
         /// </summary>
-        ServerNodeBuildCancel = 0x93, // Binary: 10010011
+        ServerNodeBuildCancel = 0x3F, // Last value in safe range (0x3F = 00111111)
 
         #endregion
     }
@@ -269,20 +270,34 @@ namespace Microsoft.Build.BackEnd
     {
         public const byte PacketVersion = 1;
 
-        private const byte ExtendedHeaderFlag = 0x40; // Bit 6 indicates extended header with version
+        // Flag bits in upper 2 bits
+        private const byte ExtendedHeaderFlag = 0x40;  // Bit 6: 01000000
+
+        // Packet type mask (lower 6 bits)
+        private const byte PacketTypeMask = (byte)NodePacketType.TypeMask; // 00111111
 
         /// <summary>
         /// Determines if a packet has an extended header by checking if the extended header flag is set.
-        /// are never interpreted as having extended headers, even if they happen to have the flag bit set.
+        /// Uses bit 6 which is now safely separated from packet type values.
         /// </summary>
         /// <param name="rawType">The raw packet type byte.</param>
         /// <returns>True if the packet has an extended header, false otherwise</returns>
         public static bool HasExtendedHeader(byte rawType) => (rawType & ExtendedHeaderFlag) != 0;
 
-        // Get base type, stripping the extended header flag
-        public static NodePacketType GetNodePacketType(byte rawType) => (NodePacketType)(rawType & ~ExtendedHeaderFlag);
+        /// <summary>
+        /// Get base packet type, stripping all flag bits (bits 6 and 7).
+        /// </summary>
+        /// <param name="rawType">The raw packet type byte with potential flags.</param>
+        /// <returns>The clean packet type without flag bits.</returns>
+        public static NodePacketType GetNodePacketType(byte rawType) => (NodePacketType)(rawType & PacketTypeMask);
 
-        // Create a type with extended header flag for net task host packets.
+        /// <summary>
+        /// Create a packet type byte with extended header flag for net task host packets.
+        /// </summary>
+        /// <param name="handshakeOptions">Handshake options to check.</param>
+        /// <param name="type">Base packet type.</param>
+        /// <param name="extendedheader">Output byte with flag set if applicable.</param>
+        /// <returns>True if extended header flag was set, false otherwise.</returns>
         public static bool TryCreateExtendedHeaderType(HandshakeOptions handshakeOptions, NodePacketType type, out byte extendedheader)
         {
             if (Handshake.IsHandshakeOptionEnabled(handshakeOptions, Handshake.NetTaskHostFlags))

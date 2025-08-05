@@ -810,8 +810,8 @@ namespace Microsoft.Build.BackEnd
 
                             // Write packet type with extended header.
                             // On the receiving side we will check if the extended header is present before making an attempt to read the packet version.
-                            bool extendedHeaderCreated = NodePacketTypeExtensions.TryCreateExtendedHeaderType(_handshakeOptions, packetType, out byte rawPackageType);
-                            writeStream.WriteByte(rawPackageType);
+                            bool extendedHeaderCreated = NodePacketTypeExtensions.TryCreateExtendedHeaderType(_handshakeOptions, packetType, out byte rawPacketType);
+                            writeStream.WriteByte(rawPacketType);
 
                             // Pad for the packet length
                             WriteInt32(writeStream, 0);

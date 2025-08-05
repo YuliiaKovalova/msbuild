@@ -3,7 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+
+#if NETFRAMEWORK
+using Microsoft.IO;
+#else
 using System.IO;
+#endif
+
 #if FEATURE_APARTMENT_STATE
 using System.Diagnostics.CodeAnalysis;
 #endif
