@@ -22,18 +22,26 @@ failed.
 
 1. Read the agent-context environment variables: `GH_AW_BUILD_OUTCOME`,
    `GH_AW_BINLOG_PATH`, `GH_AW_PR_NUMBER`, `GH_AW_PR_HEAD_SHA`,
-   `GH_AW_WORKSPACE`.
+   `GH_AW_AZDO_BUILD_ID`, `GH_AW_AZDO_BUILD_URL`, `GH_AW_WORKSPACE`.
 
-2. If `GH_AW_BUILD_OUTCOME == 'success'`, the build did not actually fail —
-   there is nothing to analyse. Call `noop` with the message
-   `"Build succeeded — no analysis required."` and stop.
+2. If `GH_AW_BUILD_OUTCOME == 'success'`, the upstream AzDO build did not
+   actually fail (or no binlog could be downloaded — same effect from this
+   workflow's point of view). Call `noop` with the message
+   `"AzDO build did not fail or no binlog available — no analysis required."`
+   and stop.
 
 3. Otherwise, launch the `build-failure-analyst` agent as a **background**
    task (`task` tool, `agent_type: "general-purpose"`,
    `model: "claude-opus-4.6"`, `mode: "background"`). In the sub-agent prompt
    include:
-   - All five `GH_AW_*` environment values verbatim so the sub-agent knows
-     which binlog metadata to read and where to post.
+   - All seven `GH_AW_*` environment values verbatim so the sub-agent knows
+     which binlog metadata to read, which AzDO build it came from, and where
+     to post.
+   - A reminder that the binlog was **downloaded from the failing AzDO build
+     `GH_AW_AZDO_BUILD_ID`** at `GH_AW_AZDO_BUILD_URL` — NOT produced by a
+     local `./build.sh` in this workflow. The sub-agent should reference the
+     AzDO build URL in its summary comment so reviewers can cross-check
+     against the canonical CI run.
    - A reminder that the pre-agent steps already dumped overview / errors /
      warnings to `/tmp/binlog-data/*.json` and that the sub-agent should
      start by `cat`ing those files via the `bash` tool.
@@ -46,7 +54,7 @@ failed.
 4. **Immediately after launching the background task** — do NOT wait for it
    to finish and do NOT read its result — call `noop` with a brief status
    message such as
-   `"Build-failure analyst launched in background for PR #N. It will post the analysis directly."`.
+   `"Build-failure analyst launched in background for PR #N (reusing AzDO build $GH_AW_AZDO_BUILD_ID). It will post the analysis directly."`.
    Then stop.
 
 > **Important**: Reading the background agent result would pull its entire
